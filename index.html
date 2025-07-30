@@ -6,11 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>纸箱</title>
     <script>
-      const redirectPath = sessionStorage.getItem('redirectPath');
-      if (redirectPath) {
-        sessionStorage.removeItem('redirectPath');
-        window.history.replaceState(null, '', '/blog/#' + redirectPath);
-      }
+      // 处理从404.html重定向过来的路径参数
+      (function(l) {
+        if (l.search) {
+          var q = {};
+          l.search.slice(1).split('&').forEach(function(v) {
+            var a = v.split('=');
+            q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
+          });
+          if (q.p !== undefined) {
+            window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + (q.p || '') +
+              (q.q ? ('?' + q.q) : '') +
+              l.hash
+            );
+          }
+        }
+      }(window.location))
     </script>
     <script type="module" crossorigin src="/blog/assets/index-FjFO2CGa.js"></script>
     <link rel="modulepreload" crossorigin href="/blog/assets/vue-BfKCsOgC.js">

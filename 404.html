@@ -6,15 +6,19 @@
   <script>
     // GitHub Pages 404 重定向脚本
     // 将所有路径重定向到 index.html，让 Vue Router 处理路由
-    var l = window.location;
-    // 获取完整路径，移除开头的 /blog/
-    var pathToRedirect = l.pathname.replace(/^\/blog\//, '');
-    l.replace(
-      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-      '/blog/?/' + pathToRedirect.replace(/&/g, '~and~') +
-      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash
-    );
+    (function(l) {
+      if (l.pathname.length > 0) {
+        var pathname = decodeURIComponent(l.pathname);
+        // 移除开头的 /blog/
+        var pathToRedirect = pathname.replace(/^\/blog\//, '');
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          '/blog/?p=/' + pathToRedirect.replace(/&/g, '~and~') +
+          (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      }
+    }(window.location));
   </script>
 </head>
 <body>
