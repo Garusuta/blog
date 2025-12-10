@@ -19,12 +19,12 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"garusuta.github.io","root":"/blog/","images":"/blog/images","scheme":"Pisces","darkmode":false,"version":"8.26.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"default"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js" defer></script>
 
-    <meta name="description" content="Rust 最独特也最强大的特性之一就是它的 ​​ 所有权系统 ​​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：  所有权规则 (Ownership Rules)想象每个值都有一个“主人”。这套规则规定了主人和值的关系：  ​​ 每个值都有自己的主人：​​ 在 Rust 中，每">
+    <meta name="description" content="Rust 最独特也最强大的特性之一就是它的 ​​ 所有权系统 ​​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：   所有权规则 (Ownership Rules) 想象每个值都有一个“主人”。这套规则规定了主人和值的关系：  ​​ 每个值都有自己的主人：​​ 在 Rust 中">
 <meta property="og:type" content="article">
 <meta property="og:title" content="所有权和借用">
 <meta property="og:url" content="https://garusuta.github.io/blog/posts/f8e2c569/index.html">
 <meta property="og:site_name" content="纸箱">
-<meta property="og:description" content="Rust 最独特也最强大的特性之一就是它的 ​​ 所有权系统 ​​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：  所有权规则 (Ownership Rules)想象每个值都有一个“主人”。这套规则规定了主人和值的关系：  ​​ 每个值都有自己的主人：​​ 在 Rust 中，每">
+<meta property="og:description" content="Rust 最独特也最强大的特性之一就是它的 ​​ 所有权系统 ​​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：   所有权规则 (Ownership Rules) 想象每个值都有一个“主人”。这套规则规定了主人和值的关系：  ​​ 每个值都有自己的主人：​​ 在 Rust 中">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-11-23T09:52:15.000Z">
 <meta property="article:modified_time" content="2025-11-23T10:34:12.294Z">
@@ -65,6 +65,13 @@
   
 
 
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha256-UF1fgpAiu3tPJN/uCqEUHNe7pnr+QR0SQDNfgglgtcM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/copy-tex.min.js","integrity":"sha256-Us54+rSGDSTvIhKKUs4kygE2ipA0RXpWWh0/zLqw3bs="}}</script>
+  <script src="/blog/js/third-party/math/katex.js" defer></script>
 
 
 
@@ -157,7 +164,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%80%E6%9C%89%E6%9D%83%E8%A7%84%E5%88%99-Ownership-Rules"><span class="nav-number">1.</span> <span class="nav-text">所有权规则 (Ownership Rules)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%80%9F%E7%94%A8%E8%A7%84%E5%88%99-Borrowing-Rules"><span class="nav-number">2.</span> <span class="nav-text">借用规则 (Borrowing Rules)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E8%BF%99%E4%B9%88%E8%AE%BE%E8%AE%A1%EF%BC%9F-%E5%86%85%E5%AD%98%E5%AE%89%E5%85%A8%EF%BC%81"><span class="nav-number">3.</span> <span class="nav-text">为什么要这么设计？(内存安全！)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E6%98%AF%E5%A6%82%E4%BD%95%E9%98%B2%E6%AD%A2%E9%97%AE%E9%A2%98%E7%9A%84%EF%BC%9F%E7%9C%8B%E4%BE%8B%E5%AD%90%EF%BC%81"><span class="nav-number">3.1.</span> <span class="nav-text">规则是如何防止问题的？看例子！</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90-1%EF%BC%9A%E8%BF%9D%E5%8F%8D%E8%A7%84%E5%88%99-%E5%A4%9A%E4%B8%AA%E5%8F%AF%E5%8F%98%E5%BC%95%E7%94%A8-%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89%E9%A3%8E%E9%99%A9"><span class="nav-number">3.1.1.</span> <span class="nav-text">例子 1：违反规则 - 多个可变引用 (数据竞争风险)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90-2%EF%BC%9A%E8%BF%9D%E5%8F%8D%E8%A7%84%E5%88%99-%E5%90%8C%E6%97%B6%E5%80%9F%E7%94%A8%E5%8F%AF%E5%8F%98%E5%92%8C%E4%B8%8D%E5%8F%AF%E5%8F%98-%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89%E9%A3%8E%E9%99%A9"><span class="nav-number">3.1.2.</span> <span class="nav-text">例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90-3%EF%BC%9A%E4%BD%9C%E7%94%A8%E5%9F%9F%E7%9A%84%E6%94%B9%E5%8F%98-%E7%BC%96%E8%AF%91%E5%99%A8%E8%B6%8A%E6%9D%A5%E8%B6%8A%E8%81%AA%E6%98%8E%E4%BA%86%EF%BC%81"><span class="nav-number">3.1.3.</span> <span class="nav-text">例子 3：作用域的改变 (编译器越来越聪明了！)</span></a></li></ol></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%80%E6%9C%89%E6%9D%83%E8%A7%84%E5%88%99-ownership-rules"><span class="nav-number">1.</span> <span class="nav-text"> 所有权规则 (Ownership Rules)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%80%9F%E7%94%A8%E8%A7%84%E5%88%99-borrowing-rules"><span class="nav-number">2.</span> <span class="nav-text"> 借用规则 (Borrowing Rules)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E8%BF%99%E4%B9%88%E8%AE%BE%E8%AE%A1%E5%86%85%E5%AD%98%E5%AE%89%E5%85%A8"><span class="nav-number">3.</span> <span class="nav-text"> 为什么要这么设计？(内存安全！)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E6%98%AF%E5%A6%82%E4%BD%95%E9%98%B2%E6%AD%A2%E9%97%AE%E9%A2%98%E7%9A%84%E7%9C%8B%E4%BE%8B%E5%AD%90"><span class="nav-number">3.1.</span> <span class="nav-text"> 规则是如何防止问题的？看例子！</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90-1%E8%BF%9D%E5%8F%8D%E8%A7%84%E5%88%99-%E5%A4%9A%E4%B8%AA%E5%8F%AF%E5%8F%98%E5%BC%95%E7%94%A8-%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89%E9%A3%8E%E9%99%A9"><span class="nav-number">3.1.1.</span> <span class="nav-text"> 例子 1：违反规则 - 多个可变引用 (数据竞争风险)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90-2%E8%BF%9D%E5%8F%8D%E8%A7%84%E5%88%99-%E5%90%8C%E6%97%B6%E5%80%9F%E7%94%A8%E5%8F%AF%E5%8F%98%E5%92%8C%E4%B8%8D%E5%8F%AF%E5%8F%98-%E6%95%B0%E6%8D%AE%E7%AB%9E%E4%BA%89%E9%A3%8E%E9%99%A9"><span class="nav-number">3.1.2.</span> <span class="nav-text"> 例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90-3%E4%BD%9C%E7%94%A8%E5%9F%9F%E7%9A%84%E6%94%B9%E5%8F%98-%E7%BC%96%E8%AF%91%E5%99%A8%E8%B6%8A%E6%9D%A5%E8%B6%8A%E8%81%AA%E6%98%8E%E4%BA%86"><span class="nav-number">3.1.3.</span> <span class="nav-text"> 例子 3：作用域的改变 (编译器越来越聪明了！)</span></a></li></ol></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -170,7 +177,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -181,7 +188,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -265,17 +272,21 @@
     
     
     <div class="post-body" itemprop="articleBody"><p>Rust 最独特也最强大的特性之一就是它的 ​<strong>​ 所有权系统 ​</strong>​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：</p>
-<hr>
-<h2 id="所有权规则-Ownership-Rules"><a href="#所有权规则-Ownership-Rules" class="headerlink" title="所有权规则 (Ownership Rules)"></a>所有权规则 (Ownership Rules)</h2><p>想象每个值都有一个“主人”。这套规则规定了主人和值的关系：</p>
+<hr />
+<h2 id="所有权规则-ownership-rules"><a class="markdownIt-Anchor" href="#所有权规则-ownership-rules"></a> 所有权规则 (Ownership Rules)</h2>
+<p>想象每个值都有一个“主人”。这套规则规定了主人和值的关系：</p>
 <ol>
 <li>​<strong>​ 每个值都有自己的主人：​</strong>​ 在 Rust 中，每一个值都必须被一个变量所拥有，这个变量就是它的 ​<strong>​ 所有者 ​</strong>​。</li>
 <li>​<strong>​ 一次只能有一个主人：​</strong>​ 一个值在同一个时间点，只能被一个变量所拥有。也就是说，​<strong>​ 一个值只有一个所有者 ​</strong>​。</li>
 <li>​<strong>​ 主人走了，值就没了：​</strong>​ 当作为所有者的 ​<strong>​ 变量离开它的作用域 ​</strong>​ 时，Rust 会自动调用 <code>drop</code> 函数，把这个值占用的内存清理掉（这个过程叫 ​<strong>​drop​</strong>​）。这保证了内存不会泄露。</li>
 </ol>
-<h2 id="借用规则-Borrowing-Rules"><a href="#借用规则-Borrowing-Rules" class="headerlink" title="借用规则 (Borrowing Rules)"></a>借用规则 (Borrowing Rules)</h2><p>直接转移所有权（比如通过函数传参）有时候不方便。Rust 提供了“借用”机制，让你能 ​<strong>​ 临时访问 ​</strong>​ 一个值，而不需要拿走所有权。借用是通过 ​<strong>​ 引用 ​</strong>​ (<code>&amp;</code>) 和 ​<strong>​ 可变引用 ​</strong>​ (<code>&amp;mut</code>) 来实现的。规则也很清晰：</p>
+<h2 id="借用规则-borrowing-rules"><a class="markdownIt-Anchor" href="#借用规则-borrowing-rules"></a> 借用规则 (Borrowing Rules)</h2>
+<p>直接转移所有权（比如通过函数传参）有时候不方便。Rust 提供了“借用”机制，让你能 ​<strong>​ 临时访问 ​</strong>​ 一个值，而不需要拿走所有权。借用是通过 ​<strong>​ 引用 ​</strong>​ (<code>&amp;</code>) 和 ​<strong>​ 可变引用 ​</strong>​ (<code>&amp;mut</code>) 来实现的。规则也很清晰：</p>
 <ol>
-<li>​<strong>​ 借东西也要讲规矩：​</strong>​<ul>
-<li>在 ​<strong>​ 任何给定时刻 ​</strong>​，对于同一块数据，你只能选择以下 ​<strong>​ 一种 ​</strong>​ 方式借用：<ul>
+<li>​<strong>​ 借东西也要讲规矩：​</strong>​
+<ul>
+<li>在 ​<strong>​ 任何给定时刻 ​</strong>​，对于同一块数据，你只能选择以下 ​<strong>​ 一种 ​</strong>​ 方式借用：
+<ul>
 <li>​<strong>​ 要么 ​</strong>​ 拥有 ​<strong>​ 一个 ​</strong>​ 可变的引用 (<code>&amp;mut</code>)。</li>
 <li>​<strong>​ 要么 ​</strong>​ 拥有 ​<strong>​ 任意多个 ​</strong>​ 不可变的引用 (<code>&amp;</code>)。</li>
 </ul>
@@ -285,35 +296,39 @@
 </li>
 <li>​<strong>​ 借的东西必须有效：​</strong>​ 所有 ​<strong>​ 引用必须始终指向有效的内存 ​</strong>​。你不能拥有一个指向已经被释放的数据的引用（悬垂引用）。（<em>官方原则：​<strong>​ 引用必须总是有效的 ​</strong>​</em>）。</li>
 </ol>
-<hr>
-<h2 id="为什么要这么设计？-内存安全！"><a href="#为什么要这么设计？-内存安全！" class="headerlink" title="为什么要这么设计？(内存安全！)"></a>为什么要这么设计？(内存安全！)</h2><p>这些规则的核心目标就是为了解决两个臭名昭著的内存安全问题：</p>
+<hr />
+<h2 id="为什么要这么设计内存安全"><a class="markdownIt-Anchor" href="#为什么要这么设计内存安全"></a> 为什么要这么设计？(内存安全！)</h2>
+<p>这些规则的核心目标就是为了解决两个臭名昭著的内存安全问题：</p>
 <ul>
 <li>​<strong>​ 数据竞争 (Data Races)：​</strong>​ 当多个线程同时访问同一块数据，且至少有一个线程在写，又没有同步机制时，就会发生数据竞争。结果可能是程序崩溃、数据损坏，或者出现完全预料之外的行为。Rust 的借用规则（规则 1）在编译期就几乎完全杜绝了数据竞争的可能性（在单线程上下文中，它也能防止意外的并发访问模式）。</li>
 <li>​<strong>​ 悬垂引用 (Dangling References)：​</strong>​ 引用指向的内存可能已经被释放了。访问这样的引用就像在悬崖边走钢丝，程序随时可能崩溃（Segmentation Fault）。所有权规则（规则 3）和借用规则（规则 2）共同确保了引用指向的数据在引用存活期间一定是有效的。</li>
 </ul>
-<h3 id="规则是如何防止问题的？看例子！"><a href="#规则是如何防止问题的？看例子！" class="headerlink" title="规则是如何防止问题的？看例子！"></a>规则是如何防止问题的？看例子！</h3><h4 id="例子-1：违反规则-多个可变引用-数据竞争风险"><a href="#例子-1：违反规则-多个可变引用-数据竞争风险" class="headerlink" title="例子 1：违反规则 - 多个可变引用 (数据竞争风险)"></a>例子 1：违反规则 - 多个可变引用 (数据竞争风险)</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<h3 id="规则是如何防止问题的看例子"><a class="markdownIt-Anchor" href="#规则是如何防止问题的看例子"></a> 规则是如何防止问题的？看例子！</h3>
+<h4 id="例子-1违反规则-多个可变引用-数据竞争风险"><a class="markdownIt-Anchor" href="#例子-1违反规则-多个可变引用-数据竞争风险"></a> 例子 1：违反规则 - 多个可变引用 (数据竞争风险)</h4>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <ul>
 <li>​<strong>​ 问题：​</strong>​ 这段代码违反了借用规则 1：不能同时拥有多个活跃的可变引用 (<code>ref1</code> 和 <code>ref2</code> 都想独占 <code>vec</code>)。</li>
 <li>​<strong>​ 编译器会报错：​</strong>​ Rust 编译器会阻止你编译这段代码。</li>
 <li>​<strong>​ 修复：​</strong>​ 通常需要调整代码结构，确保同一时间只有一个可变引用在使用。比如，去掉其中一个 <code>println!</code> 中对 <code>ref1</code> 或 <code>ref2</code> 的使用。</li>
 </ul>
-<h4 id="例子-2：违反规则-同时借用可变和不可变-数据竞争风险"><a href="#例子-2：违反规则-同时借用可变和不可变-数据竞争风险" class="headerlink" title="例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)"></a>例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)</h4><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec 存活时尝试借可变引用</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;ref1: &#123;:?&#125;, ref2: &#123;:?&#125;&quot;</span>, ref1, ref2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<h4 id="例子-2违反规则-同时借用可变和不可变-数据竞争风险"><a class="markdownIt-Anchor" href="#例子-2违反规则-同时借用可变和不可变-数据竞争风险"></a> 例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)</h4>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec 存活时尝试借可变引用</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;ref1: &#123;:?&#125;, ref2: &#123;:?&#125;&quot;</span>, ref1, ref2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <ul>
-<li>​<strong>​ 问题：​</strong>​ 违反了借用规则 1：不能同时拥有活跃的不可变引用 (<code>ref1</code>) 和可变引用 (<code>ref2</code>)。为什么不行？<ul>
+<li>​<strong>​ 问题：​</strong>​ 违反了借用规则 1：不能同时拥有活跃的不可变引用 (<code>ref1</code>) 和可变引用 (<code>ref2</code>)。为什么不行？
+<ul>
 <li>如果有人通过 <code>ref2</code>（可变引用）修改了 <code>vec</code>（比如 <code>ref2.push(7)</code>），那么 <code>ref1</code>（不可变引用）读取到的值就变得不可预测了，这违背了不可变引用“只读”的承诺。</li>
 <li>官方文档解释得很形象：​<strong>​ 正在借用不可变引用的用户，肯定不希望他借用的东西，被另外一个人莫名其妙改变了。多个不可变借用被允许是因为没有人会去试图修改数据，每个人都只读这一份数据而不做修改，因此不用担心数据被污染。​</strong>​</li>
 </ul>
 </li>
 <li>​<strong>​ 编译器会报错：​</strong>​ 同样编译不过。</li>
 </ul>
-<h4 id="例子-3：作用域的改变-编译器越来越聪明了！"><a href="#例子-3：作用域的改变-编译器越来越聪明了！" class="headerlink" title="例子 3：作用域的改变 (编译器越来越聪明了！)"></a>例子 3：作用域的改变 (编译器越来越聪明了！)</h4><p>早期版本的 Rust 编译器（Rust 1.31 之前）中，引用的作用域和它绑定的变量作用域是一样的（到花括号 <code>}</code> 结束）。这有时候写起来挺别扭：</p>
+<h4 id="例子-3作用域的改变-编译器越来越聪明了"><a class="markdownIt-Anchor" href="#例子-3作用域的改变-编译器越来越聪明了"></a> 例子 3：作用域的改变 (编译器越来越聪明了！)</h4>
+<p>早期版本的 Rust 编译器（Rust 1.31 之前）中，引用的作用域和它绑定的变量作用域是一样的（到花括号 <code>}</code> 结束）。这有时候写起来挺别扭：</p>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r1</span> = &amp;s;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r2</span> = &amp;s;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125; and &#123;&#125;&quot;</span>, r1, r2); <span class="comment">// 在这里，r1 和 r2 的使命完成了</span></span><br><span class="line">    <span class="comment">// 在早期编译器看来，r1 和 r2 的作用域要持续到 main 函数结束的花括号</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r3</span> = &amp;<span class="keyword">mut</span> s; <span class="comment">// 早期编译器：错误！认为 r1 和 r2 (不可变) 还活着，不能借可变</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, r3);</span><br><span class="line">&#125; <span class="comment">// 早期编译器：认为 r1, r2, r3 作用域在这里结束</span></span><br></pre></td></tr></table></figure>
-
 <ul>
 <li>​<strong>​ 老问题：​</strong>​ 在老编译器眼里，<code>r1</code> 和 <code>r2</code> 的作用域一直到 <code>main</code> 函数结尾的 <code>}</code>，所以在 <code>println!</code> 之后尝试创建可变引用 <code>r3</code> 会报错（违反了规则 1：同时存在不可变和可变借用）。</li>
-<li>​<strong>​ 新改进：​</strong>​ 现代 Rust 编译器（引入了 ​<strong>​Non-Lexical Lifetimes, NLL​</strong>​）变得更聪明了！它 ​<strong>​ 判断引用的作用域结束于它最后一次被使用的位置 ​</strong>​（<code>last use</code>）。在上面的代码中：<ul>
+<li>​<strong>​ 新改进：​</strong>​ 现代 Rust 编译器（引入了 ​<strong>​Non-Lexical Lifetimes, NLL​</strong>​）变得更聪明了！它 ​<strong>​ 判断引用的作用域结束于它最后一次被使用的位置 ​</strong>​（<code>last use</code>）。在上面的代码中：
+<ul>
 <li><code>r1</code> 和 <code>r2</code> 在 <code>println!(&quot;{} and {}&quot;, r1, r2);</code> 之后就不再被使用了。</li>
 <li>编译器认为它们的借用作用域 ​<strong>​ 到此结束 ​</strong>​。</li>
 <li>因此，紧接着创建可变引用 <code>r3</code> 是允许的，代码能顺利编译通过。</li>
@@ -322,9 +337,8 @@
 <li>​<strong>​ 新作用域：​</strong>​</li>
 </ul>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r1</span> = &amp;s;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r2</span> = &amp;s;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125; and &#123;&#125;&quot;</span>, r1, r2); <span class="comment">// r1, r2 的借用作用域在此结束 (NLL)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r3</span> = &amp;<span class="keyword">mut</span> s; <span class="comment">// 允许！因为 r1, r2 的借用已经结束了</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, r3); <span class="comment">// r3 的借用作用域在此结束 (NLL)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p>​<strong>​ 总结：​</strong>​ Rust 的所有权和借用规则初看可能有点严格，但它们正是 Rust 实现内存安全并发且无需垃圾回收的核心武器。编译器是你的好帮手，它会严格执行这些规则。理解并习惯这些规则后，你会发现在它们约束下写出的代码，天然就具备更高的安全性和可靠性。</p>
-<hr>
+<hr />
 <p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
 
     </div>

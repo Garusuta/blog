@@ -19,12 +19,12 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"garusuta.github.io","root":"/blog/","images":"/blog/images","scheme":"Pisces","darkmode":false,"version":"8.26.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"default"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js" defer></script>
 
-    <meta name="description" content="在 Rust 中，Fn、FnOnce 和 FnMut 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：  ​​1. 核心概念 ​​   Trait 所有权要求 调用方式 典型用途    ​​FnOnce​​ 获取所有权（self） 只能调用 ​​ 一次 ​​ 消耗资源的闭包（如移动所有权）   ​​FnMut​​ 可变借用（&amp;mu">
+    <meta name="description" content="在 Rust 中，Fn、FnOnce 和 FnMut 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：   ​​1. 核心概念 ​​    Trait 所有权要求 调用方式 典型用途     ​​FnOnce​​ 获取所有权（self） 只能调用 ​​ 一次 ​​ 消耗资源的闭包（如移动所有权）   ​​FnMut​​ 可变借用（&amp;amp">
 <meta property="og:type" content="article">
 <meta property="og:title" content="闭包">
 <meta property="og:url" content="https://garusuta.github.io/blog/posts/f9636392/index.html">
 <meta property="og:site_name" content="纸箱">
-<meta property="og:description" content="在 Rust 中，Fn、FnOnce 和 FnMut 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：  ​​1. 核心概念 ​​   Trait 所有权要求 调用方式 典型用途    ​​FnOnce​​ 获取所有权（self） 只能调用 ​​ 一次 ​​ 消耗资源的闭包（如移动所有权）   ​​FnMut​​ 可变借用（&amp;mu">
+<meta property="og:description" content="在 Rust 中，Fn、FnOnce 和 FnMut 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：   ​​1. 核心概念 ​​    Trait 所有权要求 调用方式 典型用途     ​​FnOnce​​ 获取所有权（self） 只能调用 ​​ 一次 ​​ 消耗资源的闭包（如移动所有权）   ​​FnMut​​ 可变借用（&amp;amp">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-11-23T09:49:46.000Z">
 <meta property="article:modified_time" content="2025-11-23T10:34:56.036Z">
@@ -65,6 +65,13 @@
   
 
 
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha256-UF1fgpAiu3tPJN/uCqEUHNe7pnr+QR0SQDNfgglgtcM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/copy-tex.min.js","integrity":"sha256-Us54+rSGDSTvIhKKUs4kygE2ipA0RXpWWh0/zLqw3bs="}}</script>
+  <script src="/blog/js/third-party/math/katex.js" defer></script>
 
 
 
@@ -157,7 +164,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%8B%E2%80%8B1-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5-%E2%80%8B%E2%80%8B"><span class="nav-number">1.</span> <span class="nav-text">​​1. 核心概念 ​​</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%8B%E2%80%8B2-%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A-%E2%80%8B%E2%80%8B"><span class="nav-number">2.</span> <span class="nav-text">​​2. 详细解释 ​​</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%80%8B%E2%80%8B-1-FnOnce%E2%80%8B%E2%80%8B"><span class="nav-number">2.1.</span> <span class="nav-text">​​(1) FnOnce​​</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%80%8B%E2%80%8B-2-FnMut%E2%80%8B%E2%80%8B"><span class="nav-number">2.2.</span> <span class="nav-text">​​(2) FnMut​​</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E2%80%8B%E2%80%8B-3-Fn%E2%80%8B%E2%80%8B"><span class="nav-number">2.3.</span> <span class="nav-text">​​(3) Fn​​</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%8B%E2%80%8B3-%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB-%E2%80%8B%E2%80%8B"><span class="nav-number">3.</span> <span class="nav-text">​​3. 继承关系 ​​</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%8B%E2%80%8B5-%E5%AE%9E%E9%99%85%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B-%E2%80%8B%E2%80%8B"><span class="nav-number">4.</span> <span class="nav-text">​​5. 实际代码示例 ​​</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%8B%E2%80%8B6-%E5%85%B3%E9%94%AE%E6%80%BB%E7%BB%93-%E2%80%8B%E2%80%8B"><span class="nav-number">5.</span> <span class="nav-text">​​6. 关键总结 ​​</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text"> ​​1. 核心概念 ​​</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A"><span class="nav-number">2.</span> <span class="nav-text"> ​​2. 详细解释 ​​</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-fnonce"><span class="nav-number">2.1.</span> <span class="nav-text"> ​​(1) FnOnce​​</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-fnmut"><span class="nav-number">2.2.</span> <span class="nav-text"> ​​(2) FnMut​​</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-fn"><span class="nav-number">2.3.</span> <span class="nav-text"> ​​(3) Fn​​</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB"><span class="nav-number">3.</span> <span class="nav-text"> ​​3. 继承关系 ​​</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%AE%9E%E9%99%85%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text"> ​​5. 实际代码示例 ​​</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%85%B3%E9%94%AE%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text"> ​​6. 关键总结 ​​</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -170,7 +177,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -181,7 +188,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -265,8 +272,9 @@
     
     
     <div class="post-body" itemprop="articleBody"><p>在 Rust 中，<code>Fn</code>、<code>FnOnce</code> 和 <code>FnMut</code> 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：</p>
-<hr>
-<h3 id="​​1-核心概念-​​"><a href="#​​1-核心概念-​​" class="headerlink" title="​​1. 核心概念 ​​"></a>​<strong>​1. 核心概念 ​</strong>​</h3><table>
+<hr />
+<h3 id="1-核心概念"><a class="markdownIt-Anchor" href="#1-核心概念"></a> ​<strong>​1. 核心概念 ​</strong>​</h3>
+<table>
 <thead>
 <tr>
 <th>Trait</th>
@@ -275,7 +283,8 @@
 <th>典型用途</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>​<strong>​<code>FnOnce</code>​</strong>​</td>
 <td>获取所有权（<code>self</code>）</td>
 <td>只能调用 ​<strong>​ 一次 ​</strong>​</td>
@@ -293,54 +302,58 @@
 <td>可调用 ​<strong>​ 多次 ​</strong>​（不可修改状态）</td>
 <td>只读取捕获变量的闭包</td>
 </tr>
-</tbody></table>
-<hr>
-<h3 id="​​2-详细解释-​​"><a href="#​​2-详细解释-​​" class="headerlink" title="​​2. 详细解释 ​​"></a>​<strong>​2. 详细解释 ​</strong>​</h3><h4 id="​​-1-FnOnce​​"><a href="#​​-1-FnOnce​​" class="headerlink" title="​​(1) FnOnce​​"></a>​<strong>​(1) <code>FnOnce</code>​</strong>​</h4><ul>
+</tbody>
+</table>
+<hr />
+<h3 id="2-详细解释"><a class="markdownIt-Anchor" href="#2-详细解释"></a> ​<strong>​2. 详细解释 ​</strong>​</h3>
+<h4 id="1-fnonce"><a class="markdownIt-Anchor" href="#1-fnonce"></a> ​<strong>​(1) <code>FnOnce</code>​</strong>​</h4>
+<ul>
 <li>​<strong>​ 所有权 ​</strong>​：通过值（<code>self</code>）捕获变量，​<strong>​ 消耗 ​</strong>​ 闭包自身。</li>
 <li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 只能调用一次 ​</strong>​（调用后闭包失效）。</li>
 <li>​<strong>​ 使用场景 ​</strong>​：需要转移所有权的操作（如 <code>std::thread::spawn</code>）。</li>
 <li>​<strong>​ 示例 ​</strong>​：</li>
 </ul>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> <span class="variable">consume</span> = || &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">    std::mem::<span class="title function_ invoke__">drop</span>(s); <span class="comment">// 显式消耗变量</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_ invoke__">consume</span>(); <span class="comment">// 第一次调用（成功）</span></span><br><span class="line"><span class="comment">// consume(); // 错误！闭包已失效</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="​​-2-FnMut​​"><a href="#​​-2-FnMut​​" class="headerlink" title="​​(2) FnMut​​"></a>​<strong>​(2) <code>FnMut</code>​</strong>​</h4><ul>
+<h4 id="2-fnmut"><a class="markdownIt-Anchor" href="#2-fnmut"></a> ​<strong>​(2) <code>FnMut</code>​</strong>​</h4>
+<ul>
 <li>​<strong>​ 所有权 ​</strong>​：通过可变引用（<code>&amp;mut self</code>）捕获变量，​<strong>​ 可修改 ​</strong>​ 环境。</li>
 <li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 可多次调用 ​</strong>​，每次调用可能改变状态。</li>
 <li>​<strong>​ 使用场景 ​</strong>​：迭代器适配器（如 <code>filter</code>、<code>map</code>）中需要修改状态的闭包。</li>
 <li>​<strong>​ 示例 ​</strong>​：</li>
 </ul>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">count</span> = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">increment</span> = || &#123;</span><br><span class="line">    count += <span class="number">1</span>; <span class="comment">// 修改捕获的变量</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;Count: &#123;&#125;&quot;</span>, count);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_ invoke__">increment</span>(); <span class="comment">// Count: 1</span></span><br><span class="line"><span class="title function_ invoke__">increment</span>(); <span class="comment">// Count: 2（状态被修改）</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="​​-3-Fn​​"><a href="#​​-3-Fn​​" class="headerlink" title="​​(3) Fn​​"></a>​<strong>​(3) <code>Fn</code>​</strong>​</h4><ul>
+<h4 id="3-fn"><a class="markdownIt-Anchor" href="#3-fn"></a> ​<strong>​(3) <code>Fn</code>​</strong>​</h4>
+<ul>
 <li>​<strong>​ 所有权 ​</strong>​：通过不可变引用（<code>&amp;self</code>）捕获变量，​<strong>​ 只读 ​</strong>​ 访问环境。</li>
 <li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 可多次调用 ​</strong>​，且不改变闭包状态。</li>
 <li>​<strong>​ 使用场景 ​</strong>​：无需修改环境的操作（如事件处理器）。</li>
 <li>​<strong>​ 示例 ​</strong>​：</li>
 </ul>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> <span class="variable">print</span> = || <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 只读借用</span></span><br><span class="line"><span class="title function_ invoke__">print</span>(); <span class="comment">// &quot;hello&quot;</span></span><br><span class="line"><span class="title function_ invoke__">print</span>(); <span class="comment">// &quot;hello&quot;（状态不变）</span></span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 外部仍可访问（未移动）</span></span><br></pre></td></tr></table></figure>
-
-<hr>
-<h3 id="​​3-继承关系-​​"><a href="#​​3-继承关系-​​" class="headerlink" title="​​3. 继承关系 ​​"></a>​<strong>​3. 继承关系 ​</strong>​</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">  FnOnce --&gt; FnMut</span><br><span class="line">  FnMut --&gt; Fn</span><br></pre></td></tr></table></figure>
-
+<hr />
+<h3 id="3-继承关系"><a class="markdownIt-Anchor" href="#3-继承关系"></a> ​<strong>​3. 继承关系 ​</strong>​</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">  FnOnce --&gt; FnMut</span><br><span class="line">  FnMut --&gt; Fn</span><br></pre></td></tr></table></figure>
 <ul>
-<li>​<strong>​ 规则 ​</strong>​：<ul>
+<li>​<strong>​ 规则 ​</strong>​：
+<ul>
 <li>所有闭包都至少实现 <code>FnOnce</code>（因为每个闭包至少会被调用一次）。</li>
 <li>实现 <code>Fn</code> 的闭包自动实现 <code>FnMut</code> 和 <code>FnOnce</code>。</li>
 <li>实现 <code>FnMut</code> 的闭包自动实现 <code>FnOnce</code>。</li>
 </ul>
 </li>
 </ul>
-<hr>
-<h3 id="​​5-实际代码示例-​​"><a href="#​​5-实际代码示例-​​" class="headerlink" title="​​5. 实际代码示例 ​​"></a>​<strong>​5. 实际代码示例 ​</strong>​</h3><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 接受 FnOnce 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_once</span>&lt;F: <span class="title function_ invoke__">FnOnce</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 FnMut 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_mut</span>&lt;F: <span class="title function_ invoke__">FnMut</span>()&gt;(<span class="keyword">mut</span> f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 Fn 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run</span>&lt;F: <span class="title function_ invoke__">Fn</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnOnce 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_once</span>(|| &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">        <span class="comment">// drop(s); // 若显式消耗，闭包只能调用一次</span></span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnMut 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_mut</span>(|| &#123;</span><br><span class="line">        <span class="comment">// 无法修改 s（未声明 mut），但可调用多次</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Fn 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run</span>(|| <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s)); <span class="comment">// 只读借用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h3 id="​​6-关键总结-​​"><a href="#​​6-关键总结-​​" class="headerlink" title="​​6. 关键总结 ​​"></a>​<strong>​6. 关键总结 ​</strong>​</h3><ul>
+<hr />
+<h3 id="5-实际代码示例"><a class="markdownIt-Anchor" href="#5-实际代码示例"></a> ​<strong>​5. 实际代码示例 ​</strong>​</h3>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 接受 FnOnce 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_once</span>&lt;F: <span class="title function_ invoke__">FnOnce</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 FnMut 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_mut</span>&lt;F: <span class="title function_ invoke__">FnMut</span>()&gt;(<span class="keyword">mut</span> f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 Fn 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run</span>&lt;F: <span class="title function_ invoke__">Fn</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnOnce 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_once</span>(|| &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">        <span class="comment">// drop(s); // 若显式消耗，闭包只能调用一次</span></span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnMut 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_mut</span>(|| &#123;</span><br><span class="line">        <span class="comment">// 无法修改 s（未声明 mut），但可调用多次</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Fn 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run</span>(|| <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s)); <span class="comment">// 只读借用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr />
+<h3 id="6-关键总结"><a class="markdownIt-Anchor" href="#6-关键总结"></a> ​<strong>​6. 关键总结 ​</strong>​</h3>
+<ul>
 <li>​<strong>​<code>FnOnce</code>​</strong>​：用于一次性闭包，消耗所有权。</li>
 <li>​<strong>​<code>FnMut</code>​</strong>​：用于需修改状态的闭包，可多次调用。</li>
 <li>​<strong>​<code>Fn</code>​</strong>​：用于只读闭包，可安全多次调用。</li>
 <li>​<strong>​ 编译器自动推断 ​</strong>​：闭包实现哪些 trait 取决于 ​<strong>​ 如何使用捕获变量 ​</strong>​（而非如何声明）。</li>
 </ul>
-<hr>
+<hr />
 <p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
 
     </div>

@@ -19,12 +19,12 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"garusuta.github.io","root":"/blog/","images":"/blog/images","scheme":"Pisces","darkmode":false,"version":"8.26.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"default"},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/blog/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/blog/js/config.js" defer></script>
 
-    <meta name="description" content="高低电平 由于电源从正极到负极有电压差，并且电路是导通的，所以就会有电流通过，LED 小灯因为有了电流通过，所以就会直接发光。我们把右侧的原 GND 处接到单片机 P0.0 引脚上，那么如果我们单片机输出一个低电平，也就是跟 GND 一样的 0V 电压，就可以让 LED 小灯和图 2-4 一样发光了。 因为我们的单片机是可以编程控制的，我们可以让 P0.0 这个引脚输出一个高电平，就是跟 VCC">
+    <meta name="description" content="高低电平  由于电源从正极到负极有电压差，并且电路是导通的，所以就会有电流通过，LED 小灯因为有了电流通过，所以就会直接发光。我们把右侧的原 GND 处接到单片机 P0.0 引脚上，那么如果我们单片机输出一个低电平，也就是跟 GND 一样的 0V 电压，就可以让 LED 小灯和图 2-4 一样发光了。 因为我们的单片机是可以编程控制的，我们可以让 P0.0 这个引脚输出一个高电平，就是跟 VC">
 <meta property="og:type" content="article">
 <meta property="og:title" content="51单片机初入门答疑">
 <meta property="og:url" content="https://garusuta.github.io/blog/posts/285b0bf6/index.html">
 <meta property="og:site_name" content="纸箱">
-<meta property="og:description" content="高低电平 由于电源从正极到负极有电压差，并且电路是导通的，所以就会有电流通过，LED 小灯因为有了电流通过，所以就会直接发光。我们把右侧的原 GND 处接到单片机 P0.0 引脚上，那么如果我们单片机输出一个低电平，也就是跟 GND 一样的 0V 电压，就可以让 LED 小灯和图 2-4 一样发光了。 因为我们的单片机是可以编程控制的，我们可以让 P0.0 这个引脚输出一个高电平，就是跟 VCC">
+<meta property="og:description" content="高低电平  由于电源从正极到负极有电压差，并且电路是导通的，所以就会有电流通过，LED 小灯因为有了电流通过，所以就会直接发光。我们把右侧的原 GND 处接到单片机 P0.0 引脚上，那么如果我们单片机输出一个低电平，也就是跟 GND 一样的 0V 电压，就可以让 LED 小灯和图 2-4 一样发光了。 因为我们的单片机是可以编程控制的，我们可以让 P0.0 这个引脚输出一个高电平，就是跟 VC">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://garusuta.github.io/blog/posts/285b0bf6/LED%E5%B0%8F%E7%81%AF%E7%94%B5%E8%B7%AF.png">
 <meta property="article:published_time" content="2025-11-23T09:54:13.000Z">
@@ -68,6 +68,13 @@
   
 
 
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha256-UF1fgpAiu3tPJN/uCqEUHNe7pnr+QR0SQDNfgglgtcM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/copy-tex.min.js","integrity":"sha256-Us54+rSGDSTvIhKKUs4kygE2ipA0RXpWWh0/zLqw3bs="}}</script>
+  <script src="/blog/js/third-party/math/katex.js" defer></script>
 
 
 
@@ -160,7 +167,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%AB%98%E4%BD%8E%E7%94%B5%E5%B9%B3"><span class="nav-number">1.</span> <span class="nav-text">高低电平</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E5%8A%9F%E8%83%BD%E5%AF%84%E5%AD%98%E5%99%A8%E5%92%8C%E4%BD%8D%E5%AE%9A%E4%B9%89"><span class="nav-number">2.</span> <span class="nav-text">特殊功能寄存器和位定义</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#C-%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="nav-number">3.</span> <span class="nav-text">C 运算符</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E4%BD%8D%E4%B8%8E-%E2%80%93"><span class="nav-number">3.1.</span> <span class="nav-text">按位与 – &amp;</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E4%BD%8D%E6%88%96-%E2%80%93"><span class="nav-number">3.2.</span> <span class="nav-text">按位或 – |</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E4%BD%8D%E5%BC%82%E6%88%96-%E2%80%93"><span class="nav-number">3.3.</span> <span class="nav-text">按位异或 – ^</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%AB%98%E4%BD%8E%E7%94%B5%E5%B9%B3"><span class="nav-number">1.</span> <span class="nav-text"> 高低电平</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E5%8A%9F%E8%83%BD%E5%AF%84%E5%AD%98%E5%99%A8%E5%92%8C%E4%BD%8D%E5%AE%9A%E4%B9%89"><span class="nav-number">2.</span> <span class="nav-text"> 特殊功能寄存器和位定义</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#c-%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="nav-number">3.</span> <span class="nav-text"> C 运算符</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E4%BD%8D%E4%B8%8E"><span class="nav-number">3.1.</span> <span class="nav-text"> 按位与 – &amp;</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E4%BD%8D%E6%88%96"><span class="nav-number">3.2.</span> <span class="nav-text"> 按位或 – |</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E4%BD%8D%E5%BC%82%E6%88%96"><span class="nav-number">3.3.</span> <span class="nav-text"> 按位异或 – ^</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -173,7 +180,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -184,7 +191,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -267,17 +274,24 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="高低电平"><a href="#高低电平" class="headerlink" title="高低电平"></a>高低电平</h1><p><img src="/blog/posts/285b0bf6/LED%E5%B0%8F%E7%81%AF%E7%94%B5%E8%B7%AF.png"></p>
+    <div class="post-body" itemprop="articleBody"><h1 id="高低电平"><a class="markdownIt-Anchor" href="#高低电平"></a> 高低电平</h1>
+<p><img src="LED%E5%B0%8F%E7%81%AF%E7%94%B5%E8%B7%AF.png" alt="" /></p>
 <p>由于电源从正极到负极有电压差，并且电路是导通的，所以就会有电流通过，LED 小灯因为有了电流通过，所以就会直接发光。我们把右侧的原 GND 处接到单片机 P0.0 引脚上，那么如果我们单片机输出一个低电平，也就是跟 GND 一样的 0V 电压，就可以让 LED 小灯和图 2-4 一样发光了。</p>
 <p>因为我们的单片机是可以编程控制的，我们可以让 P0.0 这个引脚输出一个高电平，就是跟 VCC 一样的 5V 电压，那么这个时候，左侧 VCC 电压和右侧的 P0.0 的电压是一致的，那就没有电压差，没有电压差就不会产生电流，没有电流 LED 小灯就不会亮，也就是会处于熄灭状态。</p>
-<h1 id="特殊功能寄存器和位定义"><a href="#特殊功能寄存器和位定义" class="headerlink" title="特殊功能寄存器和位定义"></a>特殊功能寄存器和位定义</h1><p><strong>第一条语句是：sfr  P0 &#x3D; 0x80;</strong></p>
+<h1 id="特殊功能寄存器和位定义"><a class="markdownIt-Anchor" href="#特殊功能寄存器和位定义"></a> 特殊功能寄存器和位定义</h1>
+<p><strong>第一条语句是：sfr  P0 = 0x80;</strong></p>
 <p>sfr 这个关键字，是 51 单片机特有的，他的作用是定义一个单片机特殊功能寄存器(special function register)。51 单片机内部有很多个小模块，每个模块居住在拥有唯一房间号的房间内，同时每个模块都有 8 个控制开关。P0 就是一个功能模块，就住在了 0x80 这个房间里，我们就是通过设置 P0 内部这个模块的 8 个开关，来让单片机的 P0 这 8 个 IO 口输出高电平或者低电平的。而 51 单片机内部有很多寄存器，如果我们想使用的话必须提前进行 sfr 声明。不过 Keil 软件已经把所有这些声明都预先写好并保存到一个专门的文件中去了，我们要用的话只要文件开头添加一行#include&lt;reg52.h&gt;即可</p>
-<p><strong>第二条语句是：sbit  LED &#x3D; P0^0;</strong></p>
-<p>这个 sbit，就是对刚才所说的 SFR 里边的 8 个开关其中的一个进行定义。经过上边第二条语句后，以后只要在程序里写 LED，就代表了 P0.0 口（“^”这个符号在数字键 6 上边），注意这个 P 必须大写，也就是说我们给 P0.0 又取了一个更形象的名字叫做 LED。<br>![[IO口特殊功能寄存器.png]]t 图中 P0 口所在的地址是 0x80，一共有从 7 到 0 这 8 个 IO 口控制位，后边有个 Reset Value（复位值），这个很重要，是我们看寄存器必看的一个参数，8 个控制位复位值全部都是 1。</p>
+<p><strong>第二条语句是：sbit  LED = P0^0;</strong></p>
+<p>这个 sbit，就是对刚才所说的 SFR 里边的 8 个开关其中的一个进行定义。经过上边第二条语句后，以后只要在程序里写 LED，就代表了 P0.0 口（“^”这个符号在数字键 6 上边），注意这个 P 必须大写，也就是说我们给 P0.0 又取了一个更形象的名字叫做 LED。<br />
+![[IO口特殊功能寄存器.png]]t 图中 P0 口所在的地址是 0x80，一共有从 7 到 0 这 8 个 IO 口控制位，后边有个 Reset Value（复位值），这个很重要，是我们看寄存器必看的一个参数，8 个控制位复位值全部都是 1。</p>
 <p>这就是告诉我们，每当单片机上电复位的时候，所有的引脚的值默认是都是 1，即高电平，我们在设计电路的时候也要充分的考虑这个问题。</p>
-<h1 id="C-运算符"><a href="#C-运算符" class="headerlink" title="C 运算符"></a>C 运算符</h1><h2 id="按位与-–"><a href="#按位与-–" class="headerlink" title="按位与 – &amp;"></a>按位与 – <code>&amp;</code></h2><p><strong>只有当两个对应的二进制位都为 1 时，结果才为 1，否则为 0</strong></p>
-<h2 id="按位或-–"><a href="#按位或-–" class="headerlink" title="按位或 – |"></a>按位或 – <code>|</code></h2><p><strong>只有当两个对应的二进制位其中有一个是 1，结果就是 1，同 0 才为 0</strong></p>
-<h2 id="按位异或-–"><a href="#按位异或-–" class="headerlink" title="按位异或 – ^"></a>按位异或 – <code>^</code></h2><p><strong>只有当两个对应的二进制位互异，结果就为 1，否则为 0</strong></p>
+<h1 id="c-运算符"><a class="markdownIt-Anchor" href="#c-运算符"></a> C 运算符</h1>
+<h2 id="按位与"><a class="markdownIt-Anchor" href="#按位与"></a> 按位与 – <code>&amp;</code></h2>
+<p><strong>只有当两个对应的二进制位都为 1 时，结果才为 1，否则为 0</strong></p>
+<h2 id="按位或"><a class="markdownIt-Anchor" href="#按位或"></a> 按位或 – <code>|</code></h2>
+<p><strong>只有当两个对应的二进制位其中有一个是 1，结果就是 1，同 0 才为 0</strong></p>
+<h2 id="按位异或"><a class="markdownIt-Anchor" href="#按位异或"></a> 按位异或 – <code>^</code></h2>
+<p><strong>只有当两个对应的二进制位互异，结果就为 1，否则为 0</strong></p>
 
     </div>
 
@@ -322,6 +336,9 @@
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/blog/posts/240d0629/" rel="next" title="戴维宁变换与诺顿变换">
+                  戴维宁变换与诺顿变换 <i class="fa fa-angle-right"></i>
+                </a>
             </div>
           </div>
     </footer>

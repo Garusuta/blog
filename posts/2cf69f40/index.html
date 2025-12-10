@@ -67,6 +67,13 @@
 
 
 
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" integrity="sha256-UF1fgpAiu3tPJN/uCqEUHNe7pnr+QR0SQDNfgglgtcM=" crossorigin="anonymous">
+  <script class="next-config" data-name="katex" type="application/json">{"copy_tex_js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/copy-tex.min.js","integrity":"sha256-Us54+rSGDSTvIhKKUs4kygE2ipA0RXpWWh0/zLqw3bs="}}</script>
+  <script src="/blog/js/third-party/math/katex.js" defer></script>
+
+
 
   <noscript>
     <link rel="stylesheet" href="/blog/css/noscript.css">
@@ -169,7 +176,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -180,7 +187,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -275,7 +282,8 @@
 <th>集合之后是否可用</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td><code>into_iter()</code></td>
 <td>​<strong>​ 消耗 ​</strong>​ 集合 (Move)</td>
 <td>​<strong>​ 拥有 ​</strong>​ 元素 (<code>T</code>)</td>
@@ -296,14 +304,17 @@
 <td><code>Iterator::Item = &amp;mut T</code></td>
 <td>​<strong>​ 可用 ​</strong>​</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p>​<strong>​ 详细解释：​</strong>​</p>
 <ol>
-<li><p>​<strong>​<code>into_iter()</code> (Into Iterator)​</strong>​</p>
+<li>
+<p>​<strong>​<code>into_iter()</code> (Into Iterator)​</strong>​</p>
 <ul>
 <li>​<strong>​ 所有权：​</strong>​ 这个方法 ​<strong>​ 消耗 ​</strong>​（consume）集合本身。调用 <code>into_iter()</code> 后，​<strong>​ 原始集合的所有权被转移 ​</strong>​ 到迭代器中。这意味着你不能再使用原来的集合变量（除非它实现了 <code>Copy</code> trait，但集合类型通常不会）。</li>
 <li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素本身 (<code>T</code>)​</strong>​。你获得了元素的所有权。</li>
-<li>​<strong>​ 用途：​</strong>​<ul>
+<li>​<strong>​ 用途：​</strong>​
+<ul>
 <li>当你 ​<strong>​ 不再需要原始集合 ​</strong>​，并且想逐个 ​<strong>​ 拥有 ​</strong>​ 集合中的元素进行处理时。</li>
 <li>在 <code>for</code> 循环中直接使用集合变量时，Rust 会 ​<strong>​ 隐式调用 <code>into_iter()</code>​</strong>​。例如：</li>
 </ul>
@@ -315,26 +326,32 @@
 <li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>T</code>（元素类型本身）。</li>
 </ul>
 </li>
-<li><p>​<strong>​<code>iter()</code> (Iterator)​</strong>​</p>
+<li>
+<p>​<strong>​<code>iter()</code> (Iterator)​</strong>​</p>
 <ul>
 <li>​<strong>​ 所有权：​</strong>​ 这个方法对集合进行 ​<strong>​ 不可变借用 ​</strong>​。调用 <code>iter()</code> 后，你仍然可以继续使用原始集合。</li>
 <li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素的不可变引用 (<code>&amp;T</code>)​</strong>​。你可以读取元素的值，但不能修改它们。</li>
-<li>​<strong>​ 用途：​</strong>​<ul>
+<li>​<strong>​ 用途：​</strong>​
+<ul>
 <li>当你只需要 ​<strong>​ 读取 ​</strong>​ 集合中的所有元素，而不需要修改它们或集合本身时。</li>
 <li>需要多次遍历同一个集合时。</li>
-<li>在 <code>for</code> 循环中显式使用 <code>iter()</code> 来避免移动所有权： <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter</span>() &#123; <span class="comment">// num 是 &amp;i32</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, num);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 正确，v 仍然可用</span></span><br></pre></td></tr></table></figure></li>
+<li>在 <code>for</code> 循环中显式使用 <code>iter()</code> 来避免移动所有权： <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter</span>() &#123; <span class="comment">// num 是 &amp;i32</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, num);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 正确，v 仍然可用</span></span><br></pre></td></tr></table></figure>
+</li>
 </ul>
 </li>
 <li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>&amp;T</code>（元素的不可变引用）。</li>
 </ul>
 </li>
-<li><p>​<strong>​<code>iter_mut()</code> (Mutable Iterator)​</strong>​</p>
+<li>
+<p>​<strong>​<code>iter_mut()</code> (Mutable Iterator)​</strong>​</p>
 <ul>
 <li>​<strong>​ 所有权：​</strong>​ 这个方法对集合进行 ​<strong>​ 可变借用 ​</strong>​。调用 <code>iter_mut()</code> 后，在迭代器存活期间，你 ​<strong>​ 不能 ​</strong>​ 再通过原始变量或其他方式 ​<strong>​ 可变地访问 ​</strong>​ 这个集合（Rust 的借用规则确保只有一个可变引用存在）。但是，你仍然可以在迭代完成后使用集合。</li>
 <li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素的可变引用 (<code>&amp;mut T</code>)​</strong>​。你可以 ​<strong>​ 读取并修改 ​</strong>​ 元素的值。</li>
-<li>​<strong>​ 用途：​</strong>​<ul>
+<li>​<strong>​ 用途：​</strong>​
+<ul>
 <li>当你需要 ​<strong>​ 修改 ​</strong>​ 集合中的元素时。</li>
-<li>例如： <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter_mut</span>() &#123; <span class="comment">// num 是 &amp;mut i32</span></span><br><span class="line">    *num *= <span class="number">2</span>; <span class="comment">// 解引用并修改值</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 输出: [2, 4, 6]</span></span><br></pre></td></tr></table></figure></li>
+<li>例如： <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter_mut</span>() &#123; <span class="comment">// num 是 &amp;mut i32</span></span><br><span class="line">    *num *= <span class="number">2</span>; <span class="comment">// 解引用并修改值</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 输出: [2, 4, 6]</span></span><br></pre></td></tr></table></figure>
+</li>
 </ul>
 </li>
 <li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>&amp;mut T</code>（元素的可变引用）。</li>
@@ -353,7 +370,7 @@
 <li>只想 ​<strong>​ 读取元素 ​</strong>​ 且 ​<strong>​ 保留集合 ​</strong>​？用 <code>iter()</code>。</li>
 <li>想 ​<strong>​ 消费集合 ​</strong>​（比如转换元素类型、把集合所有权传给其他函数）？用 <code>into_iter()</code>（或直接在 <code>for</code> 循环里用集合变量）。</li>
 </ul>
-<hr>
+<hr />
 <p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
 
     </div>
