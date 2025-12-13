@@ -173,7 +173,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -215,6 +215,84 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://garusuta.github.io/blog/posts/4544f1a5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Garusuta">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="纸箱">
+      <meta itemprop="description" content="一些日常记录与分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 纸箱">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/blog/posts/4544f1a5/" class="post-title-link" itemprop="url">Tokio</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2025-12-14 00:12:59 / 修改时间：00:13:52" itemprop="dateCreated datePublished" datetime="2025-12-14T00:12:59+08:00">2025-12-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="https://garusuta.github.io/blog/posts/5378a865/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -245,7 +323,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2025-12-13 18:02:43 / 修改时间：21:33:38" itemprop="dateCreated datePublished" datetime="2025-12-13T18:02:43+08:00">2025-12-13</time>
+      <time title="创建时间：2025-12-13 18:02:43 / 修改时间：21:51:43" itemprop="dateCreated datePublished" datetime="2025-12-13T18:02:43+08:00">2025-12-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -358,9 +436,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2025-12-10 21:50:08 / 修改时间：21:50:25" itemprop="dateCreated datePublished" datetime="2025-12-10T21:50:08+08:00">2025-12-10</time>
+      <time title="创建时间：2025-12-10 21:50:08" itemprop="dateCreated datePublished" datetime="2025-12-10T21:50:08+08:00">2025-12-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2025-12-14 00:31:49" itemprop="dateModified" datetime="2025-12-14T00:31:49+08:00">2025-12-14</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -382,7 +466,19 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          
+          <h1 id="message"><a class="markdownIt-Anchor" href="#message"></a> Message</h1>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 邮件建造示例</span><br><span class="line"><span class="keyword">let</span> <span class="variable">email</span> = Message::<span class="title function_ invoke__">builder</span>()</span><br><span class="line">         .<span class="title function_ invoke__">from</span>(<span class="string">&quot;NoBody &lt;nobody@domain.tld&gt;&quot;</span>.<span class="title function_ invoke__">parse</span>().<span class="title function_ invoke__">unwrap</span>())</span><br><span class="line">         .<span class="title function_ invoke__">reply_to</span>(<span class="string">&quot;Yuin &lt;yuin@domain.tld&gt;&quot;</span>.<span class="title function_ invoke__">parse</span>().<span class="title function_ invoke__">unwrap</span>())</span><br><span class="line">         .<span class="title function_ invoke__">to</span>(<span class="string">&quot;Hei &lt;hei@domain.tld&gt;&quot;</span>.<span class="title function_ invoke__">parse</span>().<span class="title function_ invoke__">unwrap</span>())</span><br><span class="line">         .<span class="title function_ invoke__">subject</span>(<span class="string">&quot;Happy new year&quot;</span>)</span><br><span class="line">         .<span class="title function_ invoke__">header</span>(ContentType::TEXT_PLAIN)</span><br><span class="line">         .<span class="title function_ invoke__">body</span>(<span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;Be happy!&quot;</span>))</span><br><span class="line">         .<span class="title function_ invoke__">unwrap</span>();</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>from</code> - 邮件发送人</li>
+<li><code>to</code> - 邮件收件人</li>
+<li><code>reply_to</code> - 邮件默认回复邮（发送的邮件（设置了该项），收到者点击回复邮件自动定向到设定的邮箱）</li>
+<li><code>subject</code> - 邮件主题</li>
+<li><code>header</code> - 内容形式</li>
+<li><code>body</code> - 邮件内容</li>
+</ul>
+<h1 id="smtptransport"><a class="markdownIt-Anchor" href="#smtptransport"></a> SmtpTransport</h1>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Open a remote connection to example</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">mailer</span> = SmtpTransport::<span class="title function_ invoke__">from_url</span>(<span class="string">&quot;smtps://username:password@smtp.example.com:465&quot;</span>)?.<span class="title function_ invoke__">build</span>();</span><br><span class="line"><span class="comment">// Send the email</span></span><br><span class="line">mailer.<span class="title function_ invoke__">send</span>(&amp;email)?;</span><br><span class="line"><span class="title function_ invoke__">Ok</span>(())</span><br></pre></td></tr></table></figure>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Create the SMTPS transport</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">sender</span> = SmtpTransport::<span class="title function_ invoke__">relay</span>(<span class="string">&quot;smtp.example.com&quot;</span>)?</span><br><span class="line">	<span class="comment">// Add credentials for authentication </span></span><br><span class="line">	.<span class="title function_ invoke__">credentials</span>(Credentials::<span class="title function_ invoke__">new</span>(</span><br><span class="line">		<span class="string">&quot;username&quot;</span>.<span class="title function_ invoke__">to_owned</span>(),</span><br><span class="line">		<span class="string">&quot;password&quot;</span>.<span class="title function_ invoke__">to_owned</span>(),</span><br><span class="line">	))</span><br><span class="line">	<span class="comment">// Optionally configure expected authentication mechanism </span></span><br><span class="line">	.<span class="title function_ invoke__">authentication</span>(<span class="built_in">vec!</span>[Mechanism::Plain])</span><br><span class="line">	.<span class="title function_ invoke__">build</span>();</span><br></pre></td></tr></table></figure>
       
     </div>
 

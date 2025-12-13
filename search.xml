@@ -1,17 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Letrre学习</title>
-    <url>/blog/posts/923764d0/</url>
-    <content><![CDATA[]]></content>
-      <categories>
-        <category>笔记</category>
-      </categories>
-      <tags>
-        <tag>Rust</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>戴维宁变换与诺顿变换</title>
     <url>/blog/posts/240d0629/</url>
     <content><![CDATA[<h2 id="求开路电压"><a class="markdownIt-Anchor" href="#求开路电压"></a> 求开路电压</h2>
@@ -58,6 +47,29 @@
       <tags>
         <tag>51单片机</tag>
         <tag>C</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Letrre学习</title>
+    <url>/blog/posts/923764d0/</url>
+    <content><![CDATA[<h1 id="message"><a class="markdownIt-Anchor" href="#message"></a> Message</h1>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"># 邮件建造示例</span><br><span class="line"><span class="keyword">let</span> <span class="variable">email</span> = Message::<span class="title function_ invoke__">builder</span>()</span><br><span class="line">         .<span class="title function_ invoke__">from</span>(<span class="string">&quot;NoBody &lt;nobody@domain.tld&gt;&quot;</span>.<span class="title function_ invoke__">parse</span>().<span class="title function_ invoke__">unwrap</span>())</span><br><span class="line">         .<span class="title function_ invoke__">reply_to</span>(<span class="string">&quot;Yuin &lt;yuin@domain.tld&gt;&quot;</span>.<span class="title function_ invoke__">parse</span>().<span class="title function_ invoke__">unwrap</span>())</span><br><span class="line">         .<span class="title function_ invoke__">to</span>(<span class="string">&quot;Hei &lt;hei@domain.tld&gt;&quot;</span>.<span class="title function_ invoke__">parse</span>().<span class="title function_ invoke__">unwrap</span>())</span><br><span class="line">         .<span class="title function_ invoke__">subject</span>(<span class="string">&quot;Happy new year&quot;</span>)</span><br><span class="line">         .<span class="title function_ invoke__">header</span>(ContentType::TEXT_PLAIN)</span><br><span class="line">         .<span class="title function_ invoke__">body</span>(<span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;Be happy!&quot;</span>))</span><br><span class="line">         .<span class="title function_ invoke__">unwrap</span>();</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>from</code> - 邮件发送人</li>
+<li><code>to</code> - 邮件收件人</li>
+<li><code>reply_to</code> - 邮件默认回复邮（发送的邮件（设置了该项），收到者点击回复邮件自动定向到设定的邮箱）</li>
+<li><code>subject</code> - 邮件主题</li>
+<li><code>header</code> - 内容形式</li>
+<li><code>body</code> - 邮件内容</li>
+</ul>
+<h1 id="smtptransport"><a class="markdownIt-Anchor" href="#smtptransport"></a> SmtpTransport</h1>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Open a remote connection to example</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">mailer</span> = SmtpTransport::<span class="title function_ invoke__">from_url</span>(<span class="string">&quot;smtps://username:password@smtp.example.com:465&quot;</span>)?.<span class="title function_ invoke__">build</span>();</span><br><span class="line"><span class="comment">// Send the email</span></span><br><span class="line">mailer.<span class="title function_ invoke__">send</span>(&amp;email)?;</span><br><span class="line"><span class="title function_ invoke__">Ok</span>(())</span><br></pre></td></tr></table></figure>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Create the SMTPS transport</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">sender</span> = SmtpTransport::<span class="title function_ invoke__">relay</span>(<span class="string">&quot;smtp.example.com&quot;</span>)?</span><br><span class="line">	<span class="comment">// Add credentials for authentication </span></span><br><span class="line">	.<span class="title function_ invoke__">credentials</span>(Credentials::<span class="title function_ invoke__">new</span>(</span><br><span class="line">		<span class="string">&quot;username&quot;</span>.<span class="title function_ invoke__">to_owned</span>(),</span><br><span class="line">		<span class="string">&quot;password&quot;</span>.<span class="title function_ invoke__">to_owned</span>(),</span><br><span class="line">	))</span><br><span class="line">	<span class="comment">// Optionally configure expected authentication mechanism </span></span><br><span class="line">	.<span class="title function_ invoke__">authentication</span>(<span class="built_in">vec!</span>[Mechanism::Plain])</span><br><span class="line">	.<span class="title function_ invoke__">build</span>();</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>笔记</category>
+      </categories>
+      <tags>
+        <tag>Rust</tag>
       </tags>
   </entry>
   <entry>
@@ -111,191 +123,9 @@
       </tags>
   </entry>
   <entry>
-    <title>迭代器</title>
-    <url>/blog/posts/2cf69f40/</url>
-    <content><![CDATA[<p>好的，我们来详细解释一下 Rust 中的 <code>into_iter()</code>, <code>iter()</code>, 和 <code>iter_mut()</code> 这三个方法。它们都是用于从集合（如 <code>Vec</code>, <code>HashMap</code>, <code>String</code>, 数组等）创建迭代器的核心方法，但它们在处理集合 ​<strong>​ 所有权 ​</strong>​ 和 ​<strong>​ 元素访问权限 ​</strong>​ 上有本质区别。</p>
-<p>​<strong>​ 核心区别总结：​</strong>​</p>
-<table>
-<thead>
-<tr>
-<th>方法</th>
-<th>所有权转移</th>
-<th>元素访问方式</th>
-<th>返回的迭代器类型</th>
-<th>集合之后是否可用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>into_iter()</code></td>
-<td>​<strong>​ 消耗 ​</strong>​ 集合 (Move)</td>
-<td>​<strong>​ 拥有 ​</strong>​ 元素 (<code>T</code>)</td>
-<td><code>IntoIterator::Item = T</code></td>
-<td>​<strong>​ 不可用 ​</strong>​</td>
-</tr>
-<tr>
-<td><code>iter()</code></td>
-<td>​<strong>​ 借用 ​</strong>​ 集合 (Immutable Borrow)</td>
-<td>​<strong>​ 不可变引用 ​</strong>​ (<code>&amp;T</code>)</td>
-<td><code>Iterator::Item = &amp;T</code></td>
-<td>​<strong>​ 可用 ​</strong>​</td>
-</tr>
-<tr>
-<td><code>iter_mut()</code></td>
-<td>​<strong>​ 可变借用 ​</strong>​ 集合 (Mutable Borrow)</td>
-<td>​<strong>​ 可变引用 ​</strong>​ (<code>&amp;mut T</code>)</td>
-<td><code>Iterator::Item = &amp;mut T</code></td>
-<td>​<strong>​ 可用 ​</strong>​</td>
-</tr>
-</tbody>
-</table>
-<p>​<strong>​ 详细解释：​</strong>​</p>
-<ol>
-<li>
-<p>​<strong>​<code>into_iter()</code> (Into Iterator)​</strong>​</p>
-<ul>
-<li>​<strong>​ 所有权：​</strong>​ 这个方法 ​<strong>​ 消耗 ​</strong>​（consume）集合本身。调用 <code>into_iter()</code> 后，​<strong>​ 原始集合的所有权被转移 ​</strong>​ 到迭代器中。这意味着你不能再使用原来的集合变量（除非它实现了 <code>Copy</code> trait，但集合类型通常不会）。</li>
-<li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素本身 (<code>T</code>)​</strong>​。你获得了元素的所有权。</li>
-<li>​<strong>​ 用途：​</strong>​
-<ul>
-<li>当你 ​<strong>​ 不再需要原始集合 ​</strong>​，并且想逐个 ​<strong>​ 拥有 ​</strong>​ 集合中的元素进行处理时。</li>
-<li>在 <code>for</code> 循环中直接使用集合变量时，Rust 会 ​<strong>​ 隐式调用 <code>into_iter()</code>​</strong>​。例如：</li>
-</ul>
- <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v &#123; <span class="comment">// 等价于 `for num in v.into_iter()`</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, num);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// println!(&quot;&#123;:?&#125;&quot;, v); // 错误！v 的所有权已被移动</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>需要将集合 ​<strong>​ 转换 ​</strong>​ 成另一种类型时（例如 <code>Vec&lt;T&gt;</code> 转换成 <code>Vec&lt;U&gt;</code>）。</li>
-</ul>
-</li>
-<li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>T</code>（元素类型本身）。</li>
-</ul>
-</li>
-<li>
-<p>​<strong>​<code>iter()</code> (Iterator)​</strong>​</p>
-<ul>
-<li>​<strong>​ 所有权：​</strong>​ 这个方法对集合进行 ​<strong>​ 不可变借用 ​</strong>​。调用 <code>iter()</code> 后，你仍然可以继续使用原始集合。</li>
-<li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素的不可变引用 (<code>&amp;T</code>)​</strong>​。你可以读取元素的值，但不能修改它们。</li>
-<li>​<strong>​ 用途：​</strong>​
-<ul>
-<li>当你只需要 ​<strong>​ 读取 ​</strong>​ 集合中的所有元素，而不需要修改它们或集合本身时。</li>
-<li>需要多次遍历同一个集合时。</li>
-<li>在 <code>for</code> 循环中显式使用 <code>iter()</code> 来避免移动所有权： <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter</span>() &#123; <span class="comment">// num 是 &amp;i32</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, num);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 正确，v 仍然可用</span></span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>&amp;T</code>（元素的不可变引用）。</li>
-</ul>
-</li>
-<li>
-<p>​<strong>​<code>iter_mut()</code> (Mutable Iterator)​</strong>​</p>
-<ul>
-<li>​<strong>​ 所有权：​</strong>​ 这个方法对集合进行 ​<strong>​ 可变借用 ​</strong>​。调用 <code>iter_mut()</code> 后，在迭代器存活期间，你 ​<strong>​ 不能 ​</strong>​ 再通过原始变量或其他方式 ​<strong>​ 可变地访问 ​</strong>​ 这个集合（Rust 的借用规则确保只有一个可变引用存在）。但是，你仍然可以在迭代完成后使用集合。</li>
-<li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素的可变引用 (<code>&amp;mut T</code>)​</strong>​。你可以 ​<strong>​ 读取并修改 ​</strong>​ 元素的值。</li>
-<li>​<strong>​ 用途：​</strong>​
-<ul>
-<li>当你需要 ​<strong>​ 修改 ​</strong>​ 集合中的元素时。</li>
-<li>例如： <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter_mut</span>() &#123; <span class="comment">// num 是 &amp;mut i32</span></span><br><span class="line">    *num *= <span class="number">2</span>; <span class="comment">// 解引用并修改值</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 输出: [2, 4, 6]</span></span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-</li>
-<li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>&amp;mut T</code>（元素的可变引用）。</li>
-</ul>
-</li>
-</ol>
-<p>​<strong>​ 关键点记忆：​</strong>​</p>
-<ul>
-<li>​<strong>​<code>into_iter()</code>：​</strong>​ “我全都要！” - 拿走整个集合和里面所有东西的所有权。原集合消失。</li>
-<li>​<strong>​<code>iter()</code>：​</strong>​ “借我看看！” - 只读借用集合和里面的东西。原集合完好无损，可以继续用。</li>
-<li>​<strong>​<code>iter_mut()</code>：​</strong>​ “借我改改！” - 可修改借用集合里的东西。原集合结构还在，但里面的内容可能变了。</li>
-</ul>
-<p>​<strong>​ 选择哪个？​</strong>​</p>
-<ul>
-<li>想 ​<strong>​ 修改元素 ​</strong>​？用 <code>iter_mut()</code>。</li>
-<li>只想 ​<strong>​ 读取元素 ​</strong>​ 且 ​<strong>​ 保留集合 ​</strong>​？用 <code>iter()</code>。</li>
-<li>想 ​<strong>​ 消费集合 ​</strong>​（比如转换元素类型、把集合所有权传给其他函数）？用 <code>into_iter()</code>（或直接在 <code>for</code> 循环里用集合变量）。</li>
-</ul>
-<hr />
-<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
-]]></content>
-      <categories>
-        <category>笔记</category>
-      </categories>
-      <tags>
-        <tag>Rust</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>所有权和借用</title>
-    <url>/blog/posts/f8e2c569/</url>
-    <content><![CDATA[<p>Rust 最独特也最强大的特性之一就是它的 ​<strong>​ 所有权系统 ​</strong>​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：</p>
-<hr />
-<h2 id="所有权规则-ownership-rules"><a class="markdownIt-Anchor" href="#所有权规则-ownership-rules"></a> 所有权规则 (Ownership Rules)</h2>
-<p>想象每个值都有一个“主人”。这套规则规定了主人和值的关系：</p>
-<ol>
-<li>​<strong>​ 每个值都有自己的主人：​</strong>​ 在 Rust 中，每一个值都必须被一个变量所拥有，这个变量就是它的 ​<strong>​ 所有者 ​</strong>​。</li>
-<li>​<strong>​ 一次只能有一个主人：​</strong>​ 一个值在同一个时间点，只能被一个变量所拥有。也就是说，​<strong>​ 一个值只有一个所有者 ​</strong>​。</li>
-<li>​<strong>​ 主人走了，值就没了：​</strong>​ 当作为所有者的 ​<strong>​ 变量离开它的作用域 ​</strong>​ 时，Rust 会自动调用 <code>drop</code> 函数，把这个值占用的内存清理掉（这个过程叫 ​<strong>​drop​</strong>​）。这保证了内存不会泄露。</li>
-</ol>
-<h2 id="借用规则-borrowing-rules"><a class="markdownIt-Anchor" href="#借用规则-borrowing-rules"></a> 借用规则 (Borrowing Rules)</h2>
-<p>直接转移所有权（比如通过函数传参）有时候不方便。Rust 提供了“借用”机制，让你能 ​<strong>​ 临时访问 ​</strong>​ 一个值，而不需要拿走所有权。借用是通过 ​<strong>​ 引用 ​</strong>​ (<code>&amp;</code>) 和 ​<strong>​ 可变引用 ​</strong>​ (<code>&amp;mut</code>) 来实现的。规则也很清晰：</p>
-<ol>
-<li>​<strong>​ 借东西也要讲规矩：​</strong>​
-<ul>
-<li>在 ​<strong>​ 任何给定时刻 ​</strong>​，对于同一块数据，你只能选择以下 ​<strong>​ 一种 ​</strong>​ 方式借用：
-<ul>
-<li>​<strong>​ 要么 ​</strong>​ 拥有 ​<strong>​ 一个 ​</strong>​ 可变的引用 (<code>&amp;mut</code>)。</li>
-<li>​<strong>​ 要么 ​</strong>​ 拥有 ​<strong>​ 任意多个 ​</strong>​ 不可变的引用 (<code>&amp;</code>)。</li>
-</ul>
-</li>
-<li>你不能同时有可变引用和不可变引用存在，也不能有多个可变引用同时活跃。（<em>官方总结得非常到位：​<strong>​ 同一时刻，你只能拥有要么一个可变引用，要么任意多个不可变引用 ​</strong>​</em>）。</li>
-</ul>
-</li>
-<li>​<strong>​ 借的东西必须有效：​</strong>​ 所有 ​<strong>​ 引用必须始终指向有效的内存 ​</strong>​。你不能拥有一个指向已经被释放的数据的引用（悬垂引用）。（<em>官方原则：​<strong>​ 引用必须总是有效的 ​</strong>​</em>）。</li>
-</ol>
-<hr />
-<h2 id="为什么要这么设计内存安全"><a class="markdownIt-Anchor" href="#为什么要这么设计内存安全"></a> 为什么要这么设计？(内存安全！)</h2>
-<p>这些规则的核心目标就是为了解决两个臭名昭著的内存安全问题：</p>
-<ul>
-<li>​<strong>​ 数据竞争 (Data Races)：​</strong>​ 当多个线程同时访问同一块数据，且至少有一个线程在写，又没有同步机制时，就会发生数据竞争。结果可能是程序崩溃、数据损坏，或者出现完全预料之外的行为。Rust 的借用规则（规则 1）在编译期就几乎完全杜绝了数据竞争的可能性（在单线程上下文中，它也能防止意外的并发访问模式）。</li>
-<li>​<strong>​ 悬垂引用 (Dangling References)：​</strong>​ 引用指向的内存可能已经被释放了。访问这样的引用就像在悬崖边走钢丝，程序随时可能崩溃（Segmentation Fault）。所有权规则（规则 3）和借用规则（规则 2）共同确保了引用指向的数据在引用存活期间一定是有效的。</li>
-</ul>
-<h3 id="规则是如何防止问题的看例子"><a class="markdownIt-Anchor" href="#规则是如何防止问题的看例子"></a> 规则是如何防止问题的？看例子！</h3>
-<h4 id="例子-1违反规则-多个可变引用-数据竞争风险"><a class="markdownIt-Anchor" href="#例子-1违反规则-多个可变引用-数据竞争风险"></a> 例子 1：违反规则 - 多个可变引用 (数据竞争风险)</h4>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>​<strong>​ 问题：​</strong>​ 这段代码违反了借用规则 1：不能同时拥有多个活跃的可变引用 (<code>ref1</code> 和 <code>ref2</code> 都想独占 <code>vec</code>)。</li>
-<li>​<strong>​ 编译器会报错：​</strong>​ Rust 编译器会阻止你编译这段代码。</li>
-<li>​<strong>​ 修复：​</strong>​ 通常需要调整代码结构，确保同一时间只有一个可变引用在使用。比如，去掉其中一个 <code>println!</code> 中对 <code>ref1</code> 或 <code>ref2</code> 的使用。</li>
-</ul>
-<h4 id="例子-2违反规则-同时借用可变和不可变-数据竞争风险"><a class="markdownIt-Anchor" href="#例子-2违反规则-同时借用可变和不可变-数据竞争风险"></a> 例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)</h4>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec 存活时尝试借可变引用</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;ref1: &#123;:?&#125;, ref2: &#123;:?&#125;&quot;</span>, ref1, ref2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>​<strong>​ 问题：​</strong>​ 违反了借用规则 1：不能同时拥有活跃的不可变引用 (<code>ref1</code>) 和可变引用 (<code>ref2</code>)。为什么不行？
-<ul>
-<li>如果有人通过 <code>ref2</code>（可变引用）修改了 <code>vec</code>（比如 <code>ref2.push(7)</code>），那么 <code>ref1</code>（不可变引用）读取到的值就变得不可预测了，这违背了不可变引用“只读”的承诺。</li>
-<li>官方文档解释得很形象：​<strong>​ 正在借用不可变引用的用户，肯定不希望他借用的东西，被另外一个人莫名其妙改变了。多个不可变借用被允许是因为没有人会去试图修改数据，每个人都只读这一份数据而不做修改，因此不用担心数据被污染。​</strong>​</li>
-</ul>
-</li>
-<li>​<strong>​ 编译器会报错：​</strong>​ 同样编译不过。</li>
-</ul>
-<h4 id="例子-3作用域的改变-编译器越来越聪明了"><a class="markdownIt-Anchor" href="#例子-3作用域的改变-编译器越来越聪明了"></a> 例子 3：作用域的改变 (编译器越来越聪明了！)</h4>
-<p>早期版本的 Rust 编译器（Rust 1.31 之前）中，引用的作用域和它绑定的变量作用域是一样的（到花括号 <code>}</code> 结束）。这有时候写起来挺别扭：</p>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r1</span> = &amp;s;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r2</span> = &amp;s;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125; and &#123;&#125;&quot;</span>, r1, r2); <span class="comment">// 在这里，r1 和 r2 的使命完成了</span></span><br><span class="line">    <span class="comment">// 在早期编译器看来，r1 和 r2 的作用域要持续到 main 函数结束的花括号</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r3</span> = &amp;<span class="keyword">mut</span> s; <span class="comment">// 早期编译器：错误！认为 r1 和 r2 (不可变) 还活着，不能借可变</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, r3);</span><br><span class="line">&#125; <span class="comment">// 早期编译器：认为 r1, r2, r3 作用域在这里结束</span></span><br></pre></td></tr></table></figure>
-<ul>
-<li>​<strong>​ 老问题：​</strong>​ 在老编译器眼里，<code>r1</code> 和 <code>r2</code> 的作用域一直到 <code>main</code> 函数结尾的 <code>}</code>，所以在 <code>println!</code> 之后尝试创建可变引用 <code>r3</code> 会报错（违反了规则 1：同时存在不可变和可变借用）。</li>
-<li>​<strong>​ 新改进：​</strong>​ 现代 Rust 编译器（引入了 ​<strong>​Non-Lexical Lifetimes, NLL​</strong>​）变得更聪明了！它 ​<strong>​ 判断引用的作用域结束于它最后一次被使用的位置 ​</strong>​（<code>last use</code>）。在上面的代码中：
-<ul>
-<li><code>r1</code> 和 <code>r2</code> 在 <code>println!(&quot;{} and {}&quot;, r1, r2);</code> 之后就不再被使用了。</li>
-<li>编译器认为它们的借用作用域 ​<strong>​ 到此结束 ​</strong>​。</li>
-<li>因此，紧接着创建可变引用 <code>r3</code> 是允许的，代码能顺利编译通过。</li>
-</ul>
-</li>
-<li>​<strong>​ 新作用域：​</strong>​</li>
-</ul>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r1</span> = &amp;s;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r2</span> = &amp;s;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125; and &#123;&#125;&quot;</span>, r1, r2); <span class="comment">// r1, r2 的借用作用域在此结束 (NLL)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r3</span> = &amp;<span class="keyword">mut</span> s; <span class="comment">// 允许！因为 r1, r2 的借用已经结束了</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, r3); <span class="comment">// r3 的借用作用域在此结束 (NLL)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>​<strong>​ 总结：​</strong>​ Rust 的所有权和借用规则初看可能有点严格，但它们正是 Rust 实现内存安全并发且无需垃圾回收的核心武器。编译器是你的好帮手，它会严格执行这些规则。理解并习惯这些规则后，你会发现在它们约束下写出的代码，天然就具备更高的安全性和可靠性。</p>
-<hr />
-<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
-]]></content>
+    <title>Tokio</title>
+    <url>/blog/posts/4544f1a5/</url>
+    <content><![CDATA[]]></content>
       <categories>
         <category>笔记</category>
       </categories>
@@ -437,6 +267,86 @@
       </tags>
   </entry>
   <entry>
+    <title>所有权和借用</title>
+    <url>/blog/posts/f8e2c569/</url>
+    <content><![CDATA[<p>Rust 最独特也最强大的特性之一就是它的 ​<strong>​ 所有权系统 ​</strong>​。这套系统在编译期就能帮你杜绝一大类内存错误，比如数据竞争和悬垂指针（引用指向了无效的内存）。理解所有权和借用规则是掌握 Rust 的关键。它们的核心思想其实挺简单的：</p>
+<hr />
+<h2 id="所有权规则-ownership-rules"><a class="markdownIt-Anchor" href="#所有权规则-ownership-rules"></a> 所有权规则 (Ownership Rules)</h2>
+<p>想象每个值都有一个“主人”。这套规则规定了主人和值的关系：</p>
+<ol>
+<li>​<strong>​ 每个值都有自己的主人：​</strong>​ 在 Rust 中，每一个值都必须被一个变量所拥有，这个变量就是它的 ​<strong>​ 所有者 ​</strong>​。</li>
+<li>​<strong>​ 一次只能有一个主人：​</strong>​ 一个值在同一个时间点，只能被一个变量所拥有。也就是说，​<strong>​ 一个值只有一个所有者 ​</strong>​。</li>
+<li>​<strong>​ 主人走了，值就没了：​</strong>​ 当作为所有者的 ​<strong>​ 变量离开它的作用域 ​</strong>​ 时，Rust 会自动调用 <code>drop</code> 函数，把这个值占用的内存清理掉（这个过程叫 ​<strong>​drop​</strong>​）。这保证了内存不会泄露。</li>
+</ol>
+<h2 id="借用规则-borrowing-rules"><a class="markdownIt-Anchor" href="#借用规则-borrowing-rules"></a> 借用规则 (Borrowing Rules)</h2>
+<p>直接转移所有权（比如通过函数传参）有时候不方便。Rust 提供了“借用”机制，让你能 ​<strong>​ 临时访问 ​</strong>​ 一个值，而不需要拿走所有权。借用是通过 ​<strong>​ 引用 ​</strong>​ (<code>&amp;</code>) 和 ​<strong>​ 可变引用 ​</strong>​ (<code>&amp;mut</code>) 来实现的。规则也很清晰：</p>
+<ol>
+<li>​<strong>​ 借东西也要讲规矩：​</strong>​
+<ul>
+<li>在 ​<strong>​ 任何给定时刻 ​</strong>​，对于同一块数据，你只能选择以下 ​<strong>​ 一种 ​</strong>​ 方式借用：
+<ul>
+<li>​<strong>​ 要么 ​</strong>​ 拥有 ​<strong>​ 一个 ​</strong>​ 可变的引用 (<code>&amp;mut</code>)。</li>
+<li>​<strong>​ 要么 ​</strong>​ 拥有 ​<strong>​ 任意多个 ​</strong>​ 不可变的引用 (<code>&amp;</code>)。</li>
+</ul>
+</li>
+<li>你不能同时有可变引用和不可变引用存在，也不能有多个可变引用同时活跃。（<em>官方总结得非常到位：​<strong>​ 同一时刻，你只能拥有要么一个可变引用，要么任意多个不可变引用 ​</strong>​</em>）。</li>
+</ul>
+</li>
+<li>​<strong>​ 借的东西必须有效：​</strong>​ 所有 ​<strong>​ 引用必须始终指向有效的内存 ​</strong>​。你不能拥有一个指向已经被释放的数据的引用（悬垂引用）。（<em>官方原则：​<strong>​ 引用必须总是有效的 ​</strong>​</em>）。</li>
+</ol>
+<hr />
+<h2 id="为什么要这么设计内存安全"><a class="markdownIt-Anchor" href="#为什么要这么设计内存安全"></a> 为什么要这么设计？(内存安全！)</h2>
+<p>这些规则的核心目标就是为了解决两个臭名昭著的内存安全问题：</p>
+<ul>
+<li>​<strong>​ 数据竞争 (Data Races)：​</strong>​ 当多个线程同时访问同一块数据，且至少有一个线程在写，又没有同步机制时，就会发生数据竞争。结果可能是程序崩溃、数据损坏，或者出现完全预料之外的行为。Rust 的借用规则（规则 1）在编译期就几乎完全杜绝了数据竞争的可能性（在单线程上下文中，它也能防止意外的并发访问模式）。</li>
+<li>​<strong>​ 悬垂引用 (Dangling References)：​</strong>​ 引用指向的内存可能已经被释放了。访问这样的引用就像在悬崖边走钢丝，程序随时可能崩溃（Segmentation Fault）。所有权规则（规则 3）和借用规则（规则 2）共同确保了引用指向的数据在引用存活期间一定是有效的。</li>
+</ul>
+<h3 id="规则是如何防止问题的看例子"><a class="markdownIt-Anchor" href="#规则是如何防止问题的看例子"></a> 规则是如何防止问题的？看例子！</h3>
+<h4 id="例子-1违反规则-多个可变引用-数据竞争风险"><a class="markdownIt-Anchor" href="#例子-1违反规则-多个可变引用-数据竞争风险"></a> 例子 1：违反规则 - 多个可变引用 (数据竞争风险)</h4>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>​<strong>​ 问题：​</strong>​ 这段代码违反了借用规则 1：不能同时拥有多个活跃的可变引用 (<code>ref1</code> 和 <code>ref2</code> 都想独占 <code>vec</code>)。</li>
+<li>​<strong>​ 编译器会报错：​</strong>​ Rust 编译器会阻止你编译这段代码。</li>
+<li>​<strong>​ 修复：​</strong>​ 通常需要调整代码结构，确保同一时间只有一个可变引用在使用。比如，去掉其中一个 <code>println!</code> 中对 <code>ref1</code> 或 <code>ref2</code> 的使用。</li>
+</ul>
+<h4 id="例子-2违反规则-同时借用可变和不可变-数据竞争风险"><a class="markdownIt-Anchor" href="#例子-2违反规则-同时借用可变和不可变-数据竞争风险"></a> 例子 2：违反规则 - 同时借用可变和不可变 (数据竞争风险)</h4>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">vec</span> = vec 存活时尝试借可变引用</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;ref1: &#123;:?&#125;, ref2: &#123;:?&#125;&quot;</span>, ref1, ref2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>​<strong>​ 问题：​</strong>​ 违反了借用规则 1：不能同时拥有活跃的不可变引用 (<code>ref1</code>) 和可变引用 (<code>ref2</code>)。为什么不行？
+<ul>
+<li>如果有人通过 <code>ref2</code>（可变引用）修改了 <code>vec</code>（比如 <code>ref2.push(7)</code>），那么 <code>ref1</code>（不可变引用）读取到的值就变得不可预测了，这违背了不可变引用“只读”的承诺。</li>
+<li>官方文档解释得很形象：​<strong>​ 正在借用不可变引用的用户，肯定不希望他借用的东西，被另外一个人莫名其妙改变了。多个不可变借用被允许是因为没有人会去试图修改数据，每个人都只读这一份数据而不做修改，因此不用担心数据被污染。​</strong>​</li>
+</ul>
+</li>
+<li>​<strong>​ 编译器会报错：​</strong>​ 同样编译不过。</li>
+</ul>
+<h4 id="例子-3作用域的改变-编译器越来越聪明了"><a class="markdownIt-Anchor" href="#例子-3作用域的改变-编译器越来越聪明了"></a> 例子 3：作用域的改变 (编译器越来越聪明了！)</h4>
+<p>早期版本的 Rust 编译器（Rust 1.31 之前）中，引用的作用域和它绑定的变量作用域是一样的（到花括号 <code>}</code> 结束）。这有时候写起来挺别扭：</p>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r1</span> = &amp;s;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r2</span> = &amp;s;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125; and &#123;&#125;&quot;</span>, r1, r2); <span class="comment">// 在这里，r1 和 r2 的使命完成了</span></span><br><span class="line">    <span class="comment">// 在早期编译器看来，r1 和 r2 的作用域要持续到 main 函数结束的花括号</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r3</span> = &amp;<span class="keyword">mut</span> s; <span class="comment">// 早期编译器：错误！认为 r1 和 r2 (不可变) 还活着，不能借可变</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, r3);</span><br><span class="line">&#125; <span class="comment">// 早期编译器：认为 r1, r2, r3 作用域在这里结束</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>​<strong>​ 老问题：​</strong>​ 在老编译器眼里，<code>r1</code> 和 <code>r2</code> 的作用域一直到 <code>main</code> 函数结尾的 <code>}</code>，所以在 <code>println!</code> 之后尝试创建可变引用 <code>r3</code> 会报错（违反了规则 1：同时存在不可变和可变借用）。</li>
+<li>​<strong>​ 新改进：​</strong>​ 现代 Rust 编译器（引入了 ​<strong>​Non-Lexical Lifetimes, NLL​</strong>​）变得更聪明了！它 ​<strong>​ 判断引用的作用域结束于它最后一次被使用的位置 ​</strong>​（<code>last use</code>）。在上面的代码中：
+<ul>
+<li><code>r1</code> 和 <code>r2</code> 在 <code>println!(&quot;{} and {}&quot;, r1, r2);</code> 之后就不再被使用了。</li>
+<li>编译器认为它们的借用作用域 ​<strong>​ 到此结束 ​</strong>​。</li>
+<li>因此，紧接着创建可变引用 <code>r3</code> 是允许的，代码能顺利编译通过。</li>
+</ul>
+</li>
+<li>​<strong>​ 新作用域：​</strong>​</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r1</span> = &amp;s;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r2</span> = &amp;s;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125; and &#123;&#125;&quot;</span>, r1, r2); <span class="comment">// r1, r2 的借用作用域在此结束 (NLL)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">r3</span> = &amp;<span class="keyword">mut</span> s; <span class="comment">// 允许！因为 r1, r2 的借用已经结束了</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, r3); <span class="comment">// r3 的借用作用域在此结束 (NLL)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​<strong>​ 总结：​</strong>​ Rust 的所有权和借用规则初看可能有点严格，但它们正是 Rust 实现内存安全并发且无需垃圾回收的核心武器。编译器是你的好帮手，它会严格执行这些规则。理解并习惯这些规则后，你会发现在它们约束下写出的代码，天然就具备更高的安全性和可靠性。</p>
+<hr />
+<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
+]]></content>
+      <categories>
+        <category>笔记</category>
+      </categories>
+      <tags>
+        <tag>Rust</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>闭包</title>
     <url>/blog/posts/f9636392/</url>
     <content><![CDATA[<p>在 Rust 中，<code>Fn</code>、<code>FnOnce</code> 和 <code>FnMut</code> 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：</p>
@@ -520,6 +430,119 @@
 <li>​<strong>​<code>FnMut</code>​</strong>​：用于需修改状态的闭包，可多次调用。</li>
 <li>​<strong>​<code>Fn</code>​</strong>​：用于只读闭包，可安全多次调用。</li>
 <li>​<strong>​ 编译器自动推断 ​</strong>​：闭包实现哪些 trait 取决于 ​<strong>​ 如何使用捕获变量 ​</strong>​（而非如何声明）。</li>
+</ul>
+<hr />
+<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
+]]></content>
+      <categories>
+        <category>笔记</category>
+      </categories>
+      <tags>
+        <tag>Rust</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>迭代器</title>
+    <url>/blog/posts/2cf69f40/</url>
+    <content><![CDATA[<p>好的，我们来详细解释一下 Rust 中的 <code>into_iter()</code>, <code>iter()</code>, 和 <code>iter_mut()</code> 这三个方法。它们都是用于从集合（如 <code>Vec</code>, <code>HashMap</code>, <code>String</code>, 数组等）创建迭代器的核心方法，但它们在处理集合 ​<strong>​ 所有权 ​</strong>​ 和 ​<strong>​ 元素访问权限 ​</strong>​ 上有本质区别。</p>
+<p>​<strong>​ 核心区别总结：​</strong>​</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>所有权转移</th>
+<th>元素访问方式</th>
+<th>返回的迭代器类型</th>
+<th>集合之后是否可用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>into_iter()</code></td>
+<td>​<strong>​ 消耗 ​</strong>​ 集合 (Move)</td>
+<td>​<strong>​ 拥有 ​</strong>​ 元素 (<code>T</code>)</td>
+<td><code>IntoIterator::Item = T</code></td>
+<td>​<strong>​ 不可用 ​</strong>​</td>
+</tr>
+<tr>
+<td><code>iter()</code></td>
+<td>​<strong>​ 借用 ​</strong>​ 集合 (Immutable Borrow)</td>
+<td>​<strong>​ 不可变引用 ​</strong>​ (<code>&amp;T</code>)</td>
+<td><code>Iterator::Item = &amp;T</code></td>
+<td>​<strong>​ 可用 ​</strong>​</td>
+</tr>
+<tr>
+<td><code>iter_mut()</code></td>
+<td>​<strong>​ 可变借用 ​</strong>​ 集合 (Mutable Borrow)</td>
+<td>​<strong>​ 可变引用 ​</strong>​ (<code>&amp;mut T</code>)</td>
+<td><code>Iterator::Item = &amp;mut T</code></td>
+<td>​<strong>​ 可用 ​</strong>​</td>
+</tr>
+</tbody>
+</table>
+<p>​<strong>​ 详细解释：​</strong>​</p>
+<ol>
+<li>
+<p>​<strong>​<code>into_iter()</code> (Into Iterator)​</strong>​</p>
+<ul>
+<li>​<strong>​ 所有权：​</strong>​ 这个方法 ​<strong>​ 消耗 ​</strong>​（consume）集合本身。调用 <code>into_iter()</code> 后，​<strong>​ 原始集合的所有权被转移 ​</strong>​ 到迭代器中。这意味着你不能再使用原来的集合变量（除非它实现了 <code>Copy</code> trait，但集合类型通常不会）。</li>
+<li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素本身 (<code>T</code>)​</strong>​。你获得了元素的所有权。</li>
+<li>​<strong>​ 用途：​</strong>​
+<ul>
+<li>当你 ​<strong>​ 不再需要原始集合 ​</strong>​，并且想逐个 ​<strong>​ 拥有 ​</strong>​ 集合中的元素进行处理时。</li>
+<li>在 <code>for</code> 循环中直接使用集合变量时，Rust 会 ​<strong>​ 隐式调用 <code>into_iter()</code>​</strong>​。例如：</li>
+</ul>
+ <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v &#123; <span class="comment">// 等价于 `for num in v.into_iter()`</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, num);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// println!(&quot;&#123;:?&#125;&quot;, v); // 错误！v 的所有权已被移动</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>需要将集合 ​<strong>​ 转换 ​</strong>​ 成另一种类型时（例如 <code>Vec&lt;T&gt;</code> 转换成 <code>Vec&lt;U&gt;</code>）。</li>
+</ul>
+</li>
+<li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>T</code>（元素类型本身）。</li>
+</ul>
+</li>
+<li>
+<p>​<strong>​<code>iter()</code> (Iterator)​</strong>​</p>
+<ul>
+<li>​<strong>​ 所有权：​</strong>​ 这个方法对集合进行 ​<strong>​ 不可变借用 ​</strong>​。调用 <code>iter()</code> 后，你仍然可以继续使用原始集合。</li>
+<li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素的不可变引用 (<code>&amp;T</code>)​</strong>​。你可以读取元素的值，但不能修改它们。</li>
+<li>​<strong>​ 用途：​</strong>​
+<ul>
+<li>当你只需要 ​<strong>​ 读取 ​</strong>​ 集合中的所有元素，而不需要修改它们或集合本身时。</li>
+<li>需要多次遍历同一个集合时。</li>
+<li>在 <code>for</code> 循环中显式使用 <code>iter()</code> 来避免移动所有权： <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter</span>() &#123; <span class="comment">// num 是 &amp;i32</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, num);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 正确，v 仍然可用</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>&amp;T</code>（元素的不可变引用）。</li>
+</ul>
+</li>
+<li>
+<p>​<strong>​<code>iter_mut()</code> (Mutable Iterator)​</strong>​</p>
+<ul>
+<li>​<strong>​ 所有权：​</strong>​ 这个方法对集合进行 ​<strong>​ 可变借用 ​</strong>​。调用 <code>iter_mut()</code> 后，在迭代器存活期间，你 ​<strong>​ 不能 ​</strong>​ 再通过原始变量或其他方式 ​<strong>​ 可变地访问 ​</strong>​ 这个集合（Rust 的借用规则确保只有一个可变引用存在）。但是，你仍然可以在迭代完成后使用集合。</li>
+<li>​<strong>​ 元素访问：​</strong>​ 迭代器 ​<strong>​ 产出集合中每个元素的可变引用 (<code>&amp;mut T</code>)​</strong>​。你可以 ​<strong>​ 读取并修改 ​</strong>​ 元素的值。</li>
+<li>​<strong>​ 用途：​</strong>​
+<ul>
+<li>当你需要 ​<strong>​ 修改 ​</strong>​ 集合中的元素时。</li>
+<li>例如： <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">v</span> = <span class="built_in">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];</span><br><span class="line"><span class="keyword">for</span> <span class="variable">num</span> <span class="keyword">in</span> v.<span class="title function_ invoke__">iter_mut</span>() &#123; <span class="comment">// num 是 &amp;mut i32</span></span><br><span class="line">    *num *= <span class="number">2</span>; <span class="comment">// 解引用并修改值</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, v); <span class="comment">// 输出: [2, 4, 6]</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li>​<strong>​ 返回值：​</strong>​ 一个迭代器，其 <code>Item</code> 类型是 <code>&amp;mut T</code>（元素的可变引用）。</li>
+</ul>
+</li>
+</ol>
+<p>​<strong>​ 关键点记忆：​</strong>​</p>
+<ul>
+<li>​<strong>​<code>into_iter()</code>：​</strong>​ “我全都要！” - 拿走整个集合和里面所有东西的所有权。原集合消失。</li>
+<li>​<strong>​<code>iter()</code>：​</strong>​ “借我看看！” - 只读借用集合和里面的东西。原集合完好无损，可以继续用。</li>
+<li>​<strong>​<code>iter_mut()</code>：​</strong>​ “借我改改！” - 可修改借用集合里的东西。原集合结构还在，但里面的内容可能变了。</li>
+</ul>
+<p>​<strong>​ 选择哪个？​</strong>​</p>
+<ul>
+<li>想 ​<strong>​ 修改元素 ​</strong>​？用 <code>iter_mut()</code>。</li>
+<li>只想 ​<strong>​ 读取元素 ​</strong>​ 且 ​<strong>​ 保留集合 ​</strong>​？用 <code>iter()</code>。</li>
+<li>想 ​<strong>​ 消费集合 ​</strong>​（比如转换元素类型、把集合所有权传给其他函数）？用 <code>into_iter()</code>（或直接在 <code>for</code> 循环里用集合变量）。</li>
 </ul>
 <hr />
 <p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
