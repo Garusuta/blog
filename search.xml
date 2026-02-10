@@ -456,9 +456,108 @@
       </tags>
   </entry>
   <entry>
+    <title>Tauri 监听器开关按钮后端逻辑</title>
+    <url>/blog/posts/3c370dfc/</url>
+    <content><![CDATA[<h1 id="设计思路"><a class="markdownIt-Anchor" href="#设计思路"></a> 设计思路</h1>
+<ul>
+<li><strong>启动任务</strong>: 当用户请求启动任务时，你需要：
+<ol>
+<li>获取 <code>AppState</code> 的锁。</li>
+<li>检查 <code>watch_task</code> 是否已经是 <code>Some</code>。</li>
+<li>如果是 <code>Some</code>，可能需要先取消旧的任务（<code>old_handle.abort()</code>），然后等待它真正停止（<code>old_handle.await</code>，或者在 Tauri 中可能通过其他机制处理）。</li>
+<li>使用 <code>tokio::spawn()</code> 启动新任务，得到一个 <code>JoinHandle</code>。</li>
+<li>将这个 <code>JoinHandle</code> 存入 <code>watch_task</code> 中（<code>Some(new_handle)</code>）。</li>
+<li>释放锁。</li>
+</ol>
+</li>
+<li><strong>停止任务</strong>: 当用户请求停止任务时，你需要：
+<ol>
+<li>获取 <code>AppState</code> 的锁。</li>
+<li>检查 <code>watch_task</code> 是否是 <code>Some</code>。</li>
+<li>如果是 <code>Some</code>，获取 <code>JoinHandle</code>，调用 <code>handle.abort()</code> 来尝试取消它。</li>
+<li>将 <code>watch_task</code> 设置回 <code>None</code>。</li>
+<li>释放锁。</li>
+</ol>
+</li>
+<li><strong>检查任务状态</strong>: 你可能还需要一个命令来检查是否有任务在运行。
+<ol>
+<li>获取 <code>AppState</code> 的锁。</li>
+<li>检查 <code>watch_task</code> 是否是 <code>Some</code>。</li>
+<li>返回 <code>true</code> 或 <code>false</code>。</li>
+<li>释放锁。</li>
+</ol>
+</li>
+</ul>
+<h1 id="代码实现"><a class="markdownIt-Anchor" href="#代码实现"></a> 代码实现</h1>
+<h2 id="appstate结构体"><a class="markdownIt-Anchor" href="#appstate结构体"></a> AppState结构体</h2>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">use</span> std::&#123;sync::Arc, thread::JoinHandle&#125;;</span><br><span class="line"><span class="keyword">use</span> tokio::sync::Mutex;</span><br><span class="line"></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">struct</span> <span class="title class_">AppState</span> &#123;</span><br><span class="line">    <span class="keyword">pub</span> watch_task: Arc&lt;Mutex&lt;<span class="type">Option</span>&lt;JoinHandle&lt;()&gt;&gt;&gt;&gt;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">AppState</span> &#123;</span><br><span class="line">    <span class="keyword">pub</span> <span class="keyword">fn</span> <span class="title function_">new</span>() <span class="punctuation">-&gt;</span> <span class="keyword">Self</span> &#123;</span><br><span class="line">        AppState &#123;</span><br><span class="line">            watch_task: Arc::<span class="title function_ invoke__">new</span>(Mutex::<span class="title function_ invoke__">new</span>(<span class="literal">None</span>)),</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">Default</span> <span class="keyword">for</span> <span class="title class_">AppState</span> &#123;</span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">default</span>() <span class="punctuation">-&gt;</span> <span class="keyword">Self</span> &#123;</span><br><span class="line">        <span class="keyword">Self</span>::<span class="title function_ invoke__">new</span>()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="tauri部分"><a class="markdownIt-Anchor" href="#tauri部分"></a> Tauri部分</h2>
+<p>引用AppState</p>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line">    tauri::Builder::<span class="title function_ invoke__">default</span>()</span><br><span class="line">.<span class="title function_ invoke__">manage</span>(AppState::<span class="title function_ invoke__">new</span>())</span><br></pre></td></tr></table></figure>
+<p><strong><code>tauri::Builder::manage()</code> 方法的作用：</strong></p>
+<ul>
+<li><code>manage()</code> 方法是 Tauri 提供的用于<strong>管理应用程序全局状态</strong>的机制。</li>
+<li>当调用 <code>builder.manage(some_value)</code> 时，Tauri 会将 <code>some_value</code> 的一个<strong>克隆（如果 <code>some_value</code> 是 <code>Clone</code> 的）或者一个共享引用（如果 <code>some_value</code> 是 <code>Arc</code> 的）</strong> 存储在应用程序的内部状态管理器中。</li>
+<li>在例子中，<code>AppState::new()</code> 创建了一个 <code>AppState</code> 实例。由于 <code>AppState</code> 内部使用了 <code>Arc</code>，Tauri 实际上会将这个 <code>Arc&lt;Mutex&lt;Option&lt;JoinHandle&lt;()&gt;&gt;&gt;&gt;</code> 的共享引用存储起来。</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="meta">#[tauri::command]</span></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">start_watching</span>(state: State&lt;<span class="symbol">&#x27;_</span>, AppState&gt;) <span class="punctuation">-&gt;</span> <span class="type">Result</span>&lt;(), <span class="type">String</span>&gt; &#123;</span><br><span class="line">    <span class="comment">// 检查是否已经在监听</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">task_guard</span> = state.watch_task.<span class="title function_ invoke__">lock</span>().<span class="keyword">await</span>;</span><br><span class="line">    <span class="keyword">if</span> task_guard.<span class="title function_ invoke__">is_some</span>() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_ invoke__">Err</span>(<span class="string">&quot;Already watching&quot;</span>.<span class="title function_ invoke__">to_string</span>());</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">let</span> <span class="variable">on_start</span> = <span class="keyword">move</span> || &#123;</span><br><span class="line">		<span class="comment">// 开启时运行的函数</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">on_stop</span> = <span class="keyword">move</span> || &#123;</span><br><span class="line">		<span class="comment">// 关闭时运行的函数</span></span><br><span class="line">    &#125;;</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">async</span> <span class="keyword">move</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">watch_task</span>(on_start, on_stop).<span class="keyword">await</span>;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    *task_guard = <span class="title function_ invoke__">Some</span>(task);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;监听已启动&quot;</span>);</span><br><span class="line">    <span class="title function_ invoke__">Ok</span>(())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#[tauri::command]</span></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">stop_watching</span>(state: State&lt;<span class="symbol">&#x27;_</span>, AppState&gt;) <span class="punctuation">-&gt;</span> <span class="type">Result</span>&lt;(), <span class="type">String</span>&gt; &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">task_guard</span> = state.watch_task.<span class="title function_ invoke__">lock</span>().<span class="keyword">await</span>;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> <span class="variable">Some</span>(task) = task_guard.<span class="title function_ invoke__">take</span>() &#123;</span><br><span class="line">        task.<span class="title function_ invoke__">abort</span>();</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;监听已停止&quot;</span>);</span><br><span class="line">        <span class="title function_ invoke__">Ok</span>(())</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">Err</span>(<span class="string">&quot;Not watching&quot;</span>.<span class="title function_ invoke__">to_string</span>())</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">  </span><br><span class="line"></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">watch_valorant</span>&lt;S, F&gt;(on_start: S, on_stop: F)</span><br><span class="line"><span class="keyword">where</span></span><br><span class="line">    S: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">    F: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">sys</span> = System::<span class="title function_ invoke__">new_all</span>();</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">interval</span> = <span class="title function_ invoke__">interval</span>(time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">3</span>));</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">valorant_running</span> = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">loop</span> &#123;</span><br><span class="line">        interval.<span class="title function_ invoke__">tick</span>().<span class="keyword">await</span>;</span><br><span class="line">        sys.<span class="title function_ invoke__">refresh_all</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> <span class="variable">is_running</span> = <span class="comment">// 具体实现</span></span><br><span class="line">        <span class="keyword">if</span> is_running &#123;</span><br><span class="line">            <span class="title function_ invoke__">on_start</span>();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="title function_ invoke__">on_stop</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>** <code>tauri::State&lt;'_, AppState&gt;</code>：**</p>
+<ul>
+<li><code>tauri::State</code>: 这是 Tauri 提供的一个用于在命令、事件等处理函数中访问已注册状态的类型。</li>
+<li><code>&lt;'_, AppState&gt;</code>: 这是一个生命周期和类型参数。
+<ul>
+<li><code>'_</code>: 表示生命周期是匿名的，Tauri 会自动管理它的生命周期，确保它不会比应用程序本身活得更久。</li>
+<li><code>AppState</code>: 指定了我们要访问的状态类型是 <code>AppState</code>。</li>
+</ul>
+</li>
+<li>当你将 <code>app_state: State&lt;'_, AppState&gt;</code> 作为命令参数时，Tauri 会自动查找通过 <code>builder.manage(AppState::new())</code> 注册的 <code>AppState</code> 实例，并安全地将其传递给你的函数。</li>
+</ul>
+<p>** <code>state.watch_task.lock().await</code>：**</p>
+<ul>
+<li>返回的是一个 <code>tokio::sync::MutexGuard&lt;'_, Option&lt;JoinHandle&lt;()&gt;&gt;&gt;</code>。</li>
+<li><code>MutexGuard</code> 是一个<strong>智能指针</strong>。它实现了 <code>Deref</code> 和 <code>DerefMut</code> trait，允许你像访问 <code>Option&lt;JoinHandle&lt;()&gt;&gt;</code> 本身一样访问它。</li>
+</ul>
+<p><strong><code>interval.tick().await;</code>:</strong></p>
+<ul>
+<li><code>interval.tick()</code>: 这个方法返回一个 <code>Future</code>（一个未来的值）。这个 <code>Future</code> 会在下一次间隔时间到达时完成。</li>
+<li><code>.await</code>: 这是异步 Rust 的核心关键字。当程序执行到 <code>.await</code> 时，如果 <code>Future</code> 还没有准备好（即 3 秒还没到），当前的任务（<code>watch_valorant</code> 函数的执行）就会被暂停，Tokio 运行时会去调度执行其他可以运行的任务。一旦 3 秒到了，<code>interval.tick()</code> 的 <code>Future</code> 就完成了，暂停的任务会被唤醒，继续执行 <code>interval.tick().await;</code> 后面的代码。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>笔记</category>
+      </categories>
+      <tags>
+        <tag>Rust</tag>
+        <tag>Tauri</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Tokio</title>
     <url>/blog/posts/4544f1a5/</url>
-    <content><![CDATA[<h1 id="单线程异步"><a class="markdownIt-Anchor" href="#单线程异步"></a> 单线程异步</h1>
+    <content><![CDATA[<h1 id="基础概念"><a class="markdownIt-Anchor" href="#基础概念"></a> 基础概念</h1>
+<h2 id="1-同步-synchronous"><a class="markdownIt-Anchor" href="#1-同步-synchronous"></a> 1. 同步 (Synchronous)</h2>
+<p>任务执行必须按顺序来，一个任务完成后，下一个任务才能开始。就像你去餐厅点餐，必须等上一个菜吃完 / 上完，才能点下一个。</p>
+<h2 id="2-异步-asynchronous"><a class="markdownIt-Anchor" href="#2-异步-asynchronous"></a> 2. 异步 (Asynchronous)</h2>
+<p>任务执行不需要等待上一个任务完成，发起任务后可以去做其他事，等任务完成后会收到 “通知”（回调 / 事件）。就像点餐时先点完所有菜，不用等上一个菜上，后厨同时准备，菜做好了服务员会喊你。</p>
+<h2 id="3-并发-concurrency"><a class="markdownIt-Anchor" href="#3-并发-concurrency"></a> 3. 并发 (Concurrency)</h2>
+<p>多个任务在<strong>同一时间段内</strong>交替执行（看似同时进行），但同一时刻只有一个任务在执行。就像你一边写代码，一边回微信，一边喝水 —— 其实是大脑快速切换，同一时刻只做一件事。</p>
+<p><strong>核心</strong>：任务切换（上下文切换），利用等待时间（比如 IO 等待）处理其他任务。</p>
+<ul>
+<li>异步编程是实现并发的常见方式；</li>
+<li>单核 CPU 只能实现并发，无法实现并行。</li>
+</ul>
+<h2 id="4-并行-parallelism"><a class="markdownIt-Anchor" href="#4-并行-parallelism"></a> 4. 并行 (Parallelism)</h2>
+<p>多个任务在<strong>同一时刻</strong>真正同时执行。就像你和同事一起写代码，你们俩同一时刻都在敲键盘 —— 需要多核 CPU / 多个进程支持。</p>
+<ul>
+<li>概念划分
+<ul>
+<li>并发、并行，是逻辑结构的设计模式。</li>
+<li>同步、异步，是逻辑调用方式。</li>
+<li>并发、并行是异步的 2 种实现方式。</li>
+</ul>
+</li>
+</ul>
+<h1 id="单线程异步"><a class="markdownIt-Anchor" href="#单线程异步"></a> 单线程异步</h1>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#添加完整功能的tokio到项目中</span></span><br><span class="line">cargo add tokio -F full</span><br></pre></td></tr></table></figure>
 <figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">use</span> tokio::runtime;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">hi</span>() &#123;</span><br><span class="line">	<span class="built_in">println!</span>(<span class="string">&quot;Hello!&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">	<span class="keyword">let</span> <span class="variable">rt</span> = runtime::Builder::<span class="title function_ invoke__">new_current_thread</span>()</span><br><span class="line">		.<span class="title function_ invoke__">enable_all</span>()</span><br><span class="line">		.<span class="title function_ invoke__">build</span>()</span><br><span class="line">		.<span class="title function_ invoke__">unwrap</span>();</span><br><span class="line">	rt.<span class="title function_ invoke__">block_on</span>(<span class="title function_ invoke__">hi</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>等效于</p>
@@ -468,7 +567,31 @@
 <li>去除<code>flavor = &quot;current_thread&quot;</code>即可变为多线程异步</li>
 <li><code>async fn main() {}</code>并非异步函数，通过安装<strong>cargo-expand</strong>可以了解到</li>
 </ol>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="meta">#![feature(prelude_import)]</span></span><br><span class="line"><span class="meta">#[macro_use]</span></span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">crate</span> std;</span><br><span class="line"><span class="meta">#[prelude_import]</span></span><br><span class="line"><span class="keyword">use</span> std::prelude::rust_2024::*;</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">hi</span>() &#123;</span><br><span class="line">    &#123;</span><br><span class="line">        ::std::io::_print(<span class="built_in">format_args!</span>(<span class="string">&quot;Hello!\n&quot;</span>));</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">body</span> = <span class="keyword">async</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">hi</span>().<span class="keyword">await</span>;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="meta">#[allow(</span></span><br><span class="line"><span class="meta">        clippy::expect_used,</span></span><br><span class="line"><span class="meta">        clippy::diverging_sub_expression,</span></span><br><span class="line"><span class="meta">        clippy::needless_return,</span></span><br><span class="line"><span class="meta">        clippy::unwrap_in_result</span></span><br><span class="line"><span class="meta">    )]</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> tokio::runtime::Builder::<span class="title function_ invoke__">new_current_thread</span>()</span><br><span class="line">            .<span class="title function_ invoke__">enable_all</span>()</span><br><span class="line">            .<span class="title function_ invoke__">build</span>()</span><br><span class="line">            .<span class="title function_ invoke__">expect</span>(<span class="string">&quot;Failed building the Runtime&quot;</span>)</span><br><span class="line">            .<span class="title function_ invoke__">block_on</span>(body);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="meta">#![feature(prelude_import)]</span></span><br><span class="line"><span class="meta">#[macro_use]</span></span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">crate</span> std;</span><br><span class="line"><span class="meta">#[prelude_import]</span></span><br><span class="line"><span class="keyword">use</span> std::prelude::rust_2024::*;</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">hi</span>() &#123;</span><br><span class="line">    &#123;</span><br><span class="line">        ::std::io::_print(<span class="built_in">format_args!</span>(<span class="string">&quot;Hello!\n&quot;</span>));</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">body</span> = <span class="keyword">async</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">hi</span>().<span class="keyword">await</span>;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="meta">#[allow(</span></span><br><span class="line"><span class="meta">        clippy::expect_used,</span></span><br><span class="line"><span class="meta">        clippy::diverging_sub_expression,</span></span><br><span class="line"><span class="meta">        clippy::needless_return,</span></span><br><span class="line"><span class="meta">        clippy::unwrap_in_result</span></span><br><span class="line"><span class="meta">    )]</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> tokio::runtime::Builder::<span class="title function_ invoke__">new_current_thread</span>()</span><br><span class="line">            .<span class="title function_ invoke__">enable_all</span>()</span><br><span class="line">            .<span class="title function_ invoke__">build</span>()</span><br><span class="line">            .<span class="title function_ invoke__">expect</span>(<span class="string">&quot;Failed building the Runtime&quot;</span>)</span><br><span class="line">            .<span class="title function_ invoke__">block_on</span>(body);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="多线程异步"><a class="markdownIt-Anchor" href="#多线程异步"></a> 多线程异步</h1>
+<h1 id="函数解析"><a class="markdownIt-Anchor" href="#函数解析"></a> 函数解析</h1>
+<h2 id="tokiospawn"><a class="markdownIt-Anchor" href="#tokiospawn"></a> <code>tokio::spawn()</code></h2>
+<p>示例代码</p>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">async</span> <span class="keyword">move</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">watch_valorant</span>(on_start, on_stop).<span class="keyword">await</span>;</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure>
+<p><code>tokio::spawn</code> 接受一个<code>Future</code>表达式，会立即返回一个 <code>JoinHandle&lt;T&gt;</code>，其中 <code>T</code> 是异步任务（<code>async move { ... }</code> 块）的返回值类型。</p>
+<ul>
+<li><code>JoinHandle</code> 是一个句柄，你可以用它来：
+<ul>
+<li><strong>等待任务完成</strong>: 使用 <code>task.await</code>。这将返回异步任务的返回值。</li>
+<li><strong>取消任务</strong>: 使用 <code>task.abort()</code>。</li>
+</ul>
+</li>
+</ul>
+<p><strong><code>async move { ... }</code></strong>:<br />
+- 这是一个<strong>异步闭包（async closure）</strong>。<br />
+- <code>async</code>: 关键字表明这是一个异步函数或闭包，它可以在等待 I/O 或其他异步操作时暂停执行，而不会阻塞整个线程。<br />
+- <code>move</code>: 关键字表示这个闭包会<strong>获取</strong>它所捕获的所有变量的所有权。这意味着闭包内部的代码将拥有这些变量，而不是仅仅借用它们。这对于在 <code>tokio::spawn</code> 中启动的任务非常重要，因为任务可能会在函数作用域之外执行，所以它需要拥有它自己的数据副本或所有权。</p>
+<h2 id="mutex"><a class="markdownIt-Anchor" href="#mutex"></a> Mutex</h2>
+<p><code>use tokio::sync::Mutex;</code>:<br />
+- <code>tokio::sync::Mutex</code> 是 Tokio 运行时提供的<strong>异步互斥锁</strong>。<br />
+- 与标准的 <code>std::sync::Mutex</code> 不同，<code>tokio::sync::Mutex</code> 是<strong>异步的</strong>。这意味着当一个任务尝试获取锁但锁已经被另一个任务持有（即发生阻塞）时，它不会阻塞整个线程，而是会让出 CPU 时间，允许其他任务运行，直到锁被释放。这对于在异步环境中（如 Tauri 应用中）管理共享资源非常重要。<br />
+- 这里的 <code>Mutex</code> 用来确保在任何时候，<strong>只有一个任务可以访问和修改 <code>Option&lt;JoinHandle&lt;()&gt;&gt;</code></strong>。这可以防止在启动新任务和取消旧任务时发生数据不一致的问题。</p>
+]]></content>
       <categories>
         <category>笔记</category>
       </categories>
@@ -527,23 +650,77 @@
       </tags>
   </entry>
   <entry>
-    <title>戴维宁变换与诺顿变换</title>
-    <url>/blog/posts/240d0629/</url>
-    <content><![CDATA[<h2 id="求开路电压"><a class="markdownIt-Anchor" href="#求开路电压"></a> 求开路电压</h2>
-<p>选定所求支路，将其开路，通过KVL来求Uoc两端电压</p>
-<h2 id="求等效电阻"><a class="markdownIt-Anchor" href="#求等效电阻"></a> 求等效电阻</h2>
+    <title>Trace Logger的五种等级</title>
+    <url>/blog/posts/21b598c8/</url>
+    <content><![CDATA[<h1 id="error"><a class="markdownIt-Anchor" href="#error"></a> Error</h1>
+<p>总是记录错误</p>
+<h1 id="warn"><a class="markdownIt-Anchor" href="#warn"></a> Warn</h1>
+<p>非关键但需要注意</p>
+<h1 id="info"><a class="markdownIt-Anchor" href="#info"></a> Info</h1>
+<p>用户/运维关心的状态</p>
+<h1 id="debug"><a class="markdownIt-Anchor" href="#debug"></a> Debug</h1>
+<p>开发者关心的内部状态</p>
+<h1 id="trace"><a class="markdownIt-Anchor" href="#trace"></a> Trace</h1>
+<p>极端详细的内部流程</p>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<table>
+<thead>
+<tr>
+<th>级别</th>
+<th>何时使用</th>
+<th>示例</th>
+<th>目标用户</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>**error!**​</td>
+<td>不可恢复的错误</td>
+<td>数据库连接失败</td>
+<td>运维/开发</td>
+</tr>
+<tr>
+<td>**warn!**​</td>
+<td>可恢复的问题</td>
+<td>缓存未命中</td>
+<td>运维/开发</td>
+</tr>
+<tr>
+<td>**info!**​</td>
+<td>业务状态变化</td>
+<td>用户注册成功</td>
+<td>用户/运维</td>
+</tr>
+<tr>
+<td>**debug!**​</td>
+<td>内部状态/性能</td>
+<td>SQL执行时间</td>
+<td>开发者</td>
+</tr>
+<tr>
+<td>**trace!**​</td>
+<td>详细执行流程</td>
+<td>每个循环迭代</td>
+<td>深度调试</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键原则</strong>：</p>
 <ol>
-<li>将独立源置零（去电压源就短路，去电流源就段路）</li>
-<li>计算端口Uoc的等效电阻Req</li>
+<li>
+<p>**error!**​ 和 **warn!**​ 要少而精</p>
+</li>
+<li>
+<p>**info!**​ 要可读性强，适合非技术人员</p>
+</li>
+<li>
+<p>**debug!**​ 是默认的调试级别</p>
+</li>
+<li>
+<p>**trace!**​ 只在需要时开启，通常对性能有影响</p>
+</li>
 </ol>
-<p>最后将电路变换成，一个电压源Uoc和一个等效电阻的Req的电路（诺顿反之同理）</p>
 ]]></content>
-      <categories>
-        <category>笔记</category>
-      </categories>
-      <tags>
-        <tag>电路</tag>
-      </tags>
   </entry>
   <entry>
     <title>初探Windows API - 切换分辨率的实现</title>
@@ -584,6 +761,60 @@
 </li>
 </ul>
 ]]></content>
+  </entry>
+  <entry>
+    <title>在Tokio遇到的生命周期问题</title>
+    <url>/blog/posts/e06d7a63/</url>
+    <content><![CDATA[<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">use</span> core::time;</span><br><span class="line"><span class="keyword">use</span> sysinfo::&#123;ProcessesToUpdate, System&#125;;</span><br><span class="line"><span class="keyword">use</span> tauri::State;</span><br><span class="line"><span class="keyword">use</span> tokio::time::interval;</span><br><span class="line"><span class="keyword">use</span> tracing::&#123;debug, info, warn&#125;;</span><br><span class="line"><span class="keyword">use</span> crate::state::AppState;</span><br><span class="line">  </span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">struct</span> <span class="title class_">Watcher</span>&lt;<span class="symbol">&#x27;a</span>, T&gt;</span><br><span class="line"><span class="keyword">where</span></span><br><span class="line">    T: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">pub</span> process_name: &amp;<span class="symbol">&#x27;a</span> <span class="type">str</span>,</span><br><span class="line">    <span class="keyword">pub</span> on_start: T,</span><br><span class="line">    <span class="keyword">pub</span> on_stop: T,</span><br><span class="line">    <span class="keyword">pub</span> is_running: <span class="type">bool</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span>&lt;<span class="symbol">&#x27;a</span>, T&gt; Watcher&lt;<span class="symbol">&#x27;a</span>, T&gt;</span><br><span class="line"><span class="keyword">where</span></span><br><span class="line">    T: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">watch_process</span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        info!(<span class="string">&quot;Starting to watch process: &#123;&#125;&quot;</span>, <span class="keyword">self</span>.process_name);</span><br><span class="line">        <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">interval</span> = <span class="title function_ invoke__">interval</span>(time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">2</span>));</span><br><span class="line">        <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">system</span> = System::<span class="title function_ invoke__">new_all</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">loop</span> &#123;</span><br><span class="line">            interval.<span class="title function_ invoke__">tick</span>().<span class="keyword">await</span>;</span><br><span class="line">            system.<span class="title function_ invoke__">refresh_processes</span>(ProcessesToUpdate::All, <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">let</span> <span class="variable">process_is_running</span> = system</span><br><span class="line">                .<span class="title function_ invoke__">processes</span>()</span><br><span class="line">                .<span class="title function_ invoke__">iter</span>()</span><br><span class="line">                .<span class="title function_ invoke__">any</span>(|(_, process)| process.<span class="title function_ invoke__">name</span>().<span class="title function_ invoke__">eq_ignore_ascii_case</span>(<span class="keyword">self</span>.process_name));</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">self</span>.is_running != process_is_running &#123;</span><br><span class="line">                <span class="keyword">self</span>.is_running = process_is_running;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">self</span>.is_running &#123;</span><br><span class="line">                    (<span class="keyword">self</span>.on_start)();</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    (<span class="keyword">self</span>.on_stop)();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">start</span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>, state: State&lt;<span class="symbol">&#x27;_</span>, AppState&gt;) &#123;</span><br><span class="line">        <span class="keyword">let</span> <span class="variable">task_guard</span> = state.watch_task.<span class="title function_ invoke__">lock</span>().<span class="keyword">await</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> task_guard.<span class="title function_ invoke__">is_some</span>() &#123;</span><br><span class="line">            warn!(<span class="string">&quot;&#123;&#125; already in watching, skipping&quot;</span>, <span class="keyword">self</span>.process_name);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">self</span>.<span class="title function_ invoke__">watch_process</span>()); <span class="comment">// 这句出现生命周期问题</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">pub</span> <span class="keyword">fn</span> <span class="title function_">stop</span>() &#123;</span><br><span class="line">		<span class="comment">// TODO</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>报错具体语句</p>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">self</span>.<span class="title function_ invoke__">watch_process</span>());</span><br><span class="line"><span class="comment">// borrowed data escapes outside of method</span></span><br><span class="line"><span class="comment">// `self` escapes the method body here</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// argument requires that `&#x27;a` must outlive `&#x27;static`</span></span><br></pre></td></tr></table></figure>
+<p><strong>原因分析:</strong></p>
+<ol>
+<li><strong><code>self</code> 的生命周期 (<code>'a</code>) vs. <code>tokio::spawn</code> 的生命周期 (<code>'static</code>)</strong>:
+<ul>
+<li><code>Watcher</code> 结构体定义了一个生命周期参数 <code>'a</code>，并且 <code>process_name</code> 字段的类型是 <code>&amp;'a str</code>。这意味着 <code>process_name</code> 是一个借用的字符串切片，它的生命周期与 <code>Watcher</code> 实例的生命周期 <code>'a</code> 绑定。</li>
+<li><code>tokio::spawn(self.watch_process())</code> 会创建一个新的 Tokio 任务。Tokio 任务通常需要捕获它们所使用的变量，并且这些变量必须具有 <code>'static</code> 生命周期。这是因为 Tokio 任务可以在任何时候被调度，并且它们的生命周期可能比创建它们的函数或方法的生命周期要长。</li>
+<li>当尝试将 <code>self.watch_process()</code>（一个方法，它隐式地借用了 <code>self</code>）传递给 <code>tokio::spawn</code> 时，Rust 编译器会发现 <code>self</code> 的生命周期 <code>'a</code> 可能比 <code>tokio::spawn</code> 所期望的 <code>'static</code> 生命周期要短。如果 <code>'a</code> 短于 <code>'static</code>，那么 <code>self</code>（以及它所引用的 <code>process_name</code>）就可能在任务还在运行时失效，导致悬空指针，这是 Rust 极力避免的。</li>
+</ul>
+</li>
+<li><strong><code>self</code> 逃逸</strong>:
+<ul>
+<li><code>tokio::spawn</code> 期望捕获的数据是 <code>'static</code> 的。当 <code>self.watch_process()</code> 被调用时，它需要访问 <code>self</code>（即 <code>Watcher</code> 实例）。因为 <code>self</code> 拥有一个非 <code>'static</code> 的生命周期 <code>'a</code>，并且 <code>tokio::spawn</code> 需要 <code>'static</code>，所以 <code>self</code> 的借用“逃逸”了 <code>start</code> 方法的局部作用域。</li>
+</ul>
+</li>
+</ol>
+<p><strong>解决方案</strong></p>
+<p><strong>方法一：让 <code>Watcher</code> 结构体本身拥有 <code>'static</code> 生命周期（如果可能）</strong></p>
+<p>如果 <code>Watcher</code> 结构体本身不需要借用任何外部数据（除了 <code>'static</code> 的数据），那么你可以尝试让它拥有 <code>'static</code> 生命周期。然而，由于 <code>process_name: &amp;'a str</code>，这直接阻止了 <code>Watcher</code> 拥有 <code>'static</code> 生命周期。</p>
+<p><strong>方法二：将 <code>Watcher</code> 的所有权移交给任务（更常见）</strong></p>
+<p>最直接的解决方案是让 <code>Watcher</code> 实例的所有权转移到 <code>tokio::spawn</code> 创建的任务中。这意味着 <code>Watcher</code> 实例本身需要被移动到任务中，而不是被借用。</p>
+<p>要做到这一点，你需要：</p>
+<ol>
+<li><strong>移除 <code>Watcher</code> 结构体中的生命周期参数 <code>'a</code>。</strong></li>
+<li><strong>将 <code>process_name</code> 的类型从 <code>&amp;'a str</code> 改为 <code>String</code>。</strong> 这样 <code>process_name</code> 就拥有了 <code>'static</code> 生命周期（或者至少是它自己的所有权，可以被移动）。</li>
+<li><strong>将 <code>watch_process</code> 方法标记为 <code>async</code>，并且让它接收 <code>self</code> 的所有权（<code>self: Watcher&lt;'static, T&gt;</code> 或直接 <code>self</code>）。</strong></li>
+<li><strong>在 <code>start</code> 方法中，将 <code>Watcher</code> 的所有权移动到 <code>tokio::spawn</code>。</strong></li>
+</ol>
+]]></content>
+  </entry>
+  <entry>
+    <title>戴维宁变换与诺顿变换</title>
+    <url>/blog/posts/240d0629/</url>
+    <content><![CDATA[<h2 id="求开路电压"><a class="markdownIt-Anchor" href="#求开路电压"></a> 求开路电压</h2>
+<p>选定所求支路，将其开路，通过KVL来求Uoc两端电压</p>
+<h2 id="求等效电阻"><a class="markdownIt-Anchor" href="#求等效电阻"></a> 求等效电阻</h2>
+<ol>
+<li>将独立源置零（去电压源就短路，去电流源就段路）</li>
+<li>计算端口Uoc的等效电阻Req</li>
+</ol>
+<p>最后将电路变换成，一个电压源Uoc和一个等效电阻的Req的电路（诺顿反之同理）</p>
+]]></content>
+      <categories>
+        <category>笔记</category>
+      </categories>
+      <tags>
+        <tag>电路</tag>
+      </tags>
   </entry>
   <entry>
     <title>所有权和借用</title>
@@ -664,79 +895,6 @@
       <tags>
         <tag>Rust</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>Trace Logger的五种等级</title>
-    <url>/blog/posts/21b598c8/</url>
-    <content><![CDATA[<h1 id="error"><a class="markdownIt-Anchor" href="#error"></a> Error</h1>
-<p>总是记录错误</p>
-<h1 id="warn"><a class="markdownIt-Anchor" href="#warn"></a> Warn</h1>
-<p>非关键但需要注意</p>
-<h1 id="info"><a class="markdownIt-Anchor" href="#info"></a> Info</h1>
-<p>用户/运维关心的状态</p>
-<h1 id="debug"><a class="markdownIt-Anchor" href="#debug"></a> Debug</h1>
-<p>开发者关心的内部状态</p>
-<h1 id="trace"><a class="markdownIt-Anchor" href="#trace"></a> Trace</h1>
-<p>极端详细的内部流程</p>
-<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
-<table>
-<thead>
-<tr>
-<th>级别</th>
-<th>何时使用</th>
-<th>示例</th>
-<th>目标用户</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>**error!**​</td>
-<td>不可恢复的错误</td>
-<td>数据库连接失败</td>
-<td>运维/开发</td>
-</tr>
-<tr>
-<td>**warn!**​</td>
-<td>可恢复的问题</td>
-<td>缓存未命中</td>
-<td>运维/开发</td>
-</tr>
-<tr>
-<td>**info!**​</td>
-<td>业务状态变化</td>
-<td>用户注册成功</td>
-<td>用户/运维</td>
-</tr>
-<tr>
-<td>**debug!**​</td>
-<td>内部状态/性能</td>
-<td>SQL执行时间</td>
-<td>开发者</td>
-</tr>
-<tr>
-<td>**trace!**​</td>
-<td>详细执行流程</td>
-<td>每个循环迭代</td>
-<td>深度调试</td>
-</tr>
-</tbody>
-</table>
-<p><strong>关键原则</strong>：</p>
-<ol>
-<li>
-<p>**error!**​ 和 **warn!**​ 要少而精</p>
-</li>
-<li>
-<p>**info!**​ 要可读性强，适合非技术人员</p>
-</li>
-<li>
-<p>**debug!**​ 是默认的调试级别</p>
-</li>
-<li>
-<p>**trace!**​ 只在需要时开启，通常对性能有影响</p>
-</li>
-</ol>
-]]></content>
   </entry>
   <entry>
     <title>特征</title>
@@ -872,101 +1030,6 @@
       </tags>
   </entry>
   <entry>
-    <title>闭包</title>
-    <url>/blog/posts/f9636392/</url>
-    <content><![CDATA[<p>在 Rust 中，<code>Fn</code>、<code>FnOnce</code> 和 <code>FnMut</code> 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：</p>
-<hr />
-<h3 id="1-核心概念"><a class="markdownIt-Anchor" href="#1-核心概念"></a> ​<strong>​1. 核心概念 ​</strong>​</h3>
-<table>
-<thead>
-<tr>
-<th>Trait</th>
-<th>所有权要求</th>
-<th>调用方式</th>
-<th>典型用途</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>​<strong>​<code>FnOnce</code>​</strong>​</td>
-<td>获取所有权（<code>self</code>）</td>
-<td>只能调用 ​<strong>​ 一次 ​</strong>​</td>
-<td>消耗资源的闭包（如移动所有权）</td>
-</tr>
-<tr>
-<td>​<strong>​<code>FnMut</code>​</strong>​</td>
-<td>可变借用（<code>&amp;mut self</code>）</td>
-<td>可调用 ​<strong>​ 多次 ​</strong>​（可修改状态）</td>
-<td>需要修改捕获变量的闭包</td>
-</tr>
-<tr>
-<td>​<strong>​<code>Fn</code>​</strong>​</td>
-<td>不可变借用（<code>&amp;self</code>）</td>
-<td>可调用 ​<strong>​ 多次 ​</strong>​（不可修改状态）</td>
-<td>只读取捕获变量的闭包</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3 id="2-详细解释"><a class="markdownIt-Anchor" href="#2-详细解释"></a> ​<strong>​2. 详细解释 ​</strong>​</h3>
-<h4 id="1-fnonce"><a class="markdownIt-Anchor" href="#1-fnonce"></a> ​<strong>​(1) <code>FnOnce</code>​</strong>​</h4>
-<ul>
-<li>​<strong>​ 所有权 ​</strong>​：通过值（<code>self</code>）捕获变量，​<strong>​ 消耗 ​</strong>​ 闭包自身。</li>
-<li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 只能调用一次 ​</strong>​（调用后闭包失效）。</li>
-<li>​<strong>​ 使用场景 ​</strong>​：需要转移所有权的操作（如 <code>std::thread::spawn</code>）。</li>
-<li>​<strong>​ 示例 ​</strong>​：</li>
-</ul>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> <span class="variable">consume</span> = || &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">    std::mem::<span class="title function_ invoke__">drop</span>(s); <span class="comment">// 显式消耗变量</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_ invoke__">consume</span>(); <span class="comment">// 第一次调用（成功）</span></span><br><span class="line"><span class="comment">// consume(); // 错误！闭包已失效</span></span><br></pre></td></tr></table></figure>
-<h4 id="2-fnmut"><a class="markdownIt-Anchor" href="#2-fnmut"></a> ​<strong>​(2) <code>FnMut</code>​</strong>​</h4>
-<ul>
-<li>​<strong>​ 所有权 ​</strong>​：通过可变引用（<code>&amp;mut self</code>）捕获变量，​<strong>​ 可修改 ​</strong>​ 环境。</li>
-<li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 可多次调用 ​</strong>​，每次调用可能改变状态。</li>
-<li>​<strong>​ 使用场景 ​</strong>​：迭代器适配器（如 <code>filter</code>、<code>map</code>）中需要修改状态的闭包。</li>
-<li>​<strong>​ 示例 ​</strong>​：</li>
-</ul>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">count</span> = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">increment</span> = || &#123;</span><br><span class="line">    count += <span class="number">1</span>; <span class="comment">// 修改捕获的变量</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;Count: &#123;&#125;&quot;</span>, count);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_ invoke__">increment</span>(); <span class="comment">// Count: 1</span></span><br><span class="line"><span class="title function_ invoke__">increment</span>(); <span class="comment">// Count: 2（状态被修改）</span></span><br></pre></td></tr></table></figure>
-<h4 id="3-fn"><a class="markdownIt-Anchor" href="#3-fn"></a> ​<strong>​(3) <code>Fn</code>​</strong>​</h4>
-<ul>
-<li>​<strong>​ 所有权 ​</strong>​：通过不可变引用（<code>&amp;self</code>）捕获变量，​<strong>​ 只读 ​</strong>​ 访问环境。</li>
-<li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 可多次调用 ​</strong>​，且不改变闭包状态。</li>
-<li>​<strong>​ 使用场景 ​</strong>​：无需修改环境的操作（如事件处理器）。</li>
-<li>​<strong>​ 示例 ​</strong>​：</li>
-</ul>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> <span class="variable">print</span> = || <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 只读借用</span></span><br><span class="line"><span class="title function_ invoke__">print</span>(); <span class="comment">// &quot;hello&quot;</span></span><br><span class="line"><span class="title function_ invoke__">print</span>(); <span class="comment">// &quot;hello&quot;（状态不变）</span></span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 外部仍可访问（未移动）</span></span><br></pre></td></tr></table></figure>
-<hr />
-<h3 id="3-继承关系"><a class="markdownIt-Anchor" href="#3-继承关系"></a> ​<strong>​3. 继承关系 ​</strong>​</h3>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">graph LR</span><br><span class="line">  FnOnce --&gt; FnMut</span><br><span class="line">  FnMut --&gt; Fn</span><br></pre></td></tr></table></figure>
-<ul>
-<li>​<strong>​ 规则 ​</strong>​：
-<ul>
-<li>所有闭包都至少实现 <code>FnOnce</code>（因为每个闭包至少会被调用一次）。</li>
-<li>实现 <code>Fn</code> 的闭包自动实现 <code>FnMut</code> 和 <code>FnOnce</code>。</li>
-<li>实现 <code>FnMut</code> 的闭包自动实现 <code>FnOnce</code>。</li>
-</ul>
-</li>
-</ul>
-<hr />
-<h3 id="5-实际代码示例"><a class="markdownIt-Anchor" href="#5-实际代码示例"></a> ​<strong>​5. 实际代码示例 ​</strong>​</h3>
-<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 接受 FnOnce 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_once</span>&lt;F: <span class="title function_ invoke__">FnOnce</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 FnMut 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_mut</span>&lt;F: <span class="title function_ invoke__">FnMut</span>()&gt;(<span class="keyword">mut</span> f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 Fn 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run</span>&lt;F: <span class="title function_ invoke__">Fn</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnOnce 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_once</span>(|| &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">        <span class="comment">// drop(s); // 若显式消耗，闭包只能调用一次</span></span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnMut 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_mut</span>(|| &#123;</span><br><span class="line">        <span class="comment">// 无法修改 s（未声明 mut），但可调用多次</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Fn 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run</span>(|| <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s)); <span class="comment">// 只读借用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<hr />
-<h3 id="6-关键总结"><a class="markdownIt-Anchor" href="#6-关键总结"></a> ​<strong>​6. 关键总结 ​</strong>​</h3>
-<ul>
-<li>​<strong>​<code>FnOnce</code>​</strong>​：用于一次性闭包，消耗所有权。</li>
-<li>​<strong>​<code>FnMut</code>​</strong>​：用于需修改状态的闭包，可多次调用。</li>
-<li>​<strong>​<code>Fn</code>​</strong>​：用于只读闭包，可安全多次调用。</li>
-<li>​<strong>​ 编译器自动推断 ​</strong>​：闭包实现哪些 trait 取决于 ​<strong>​ 如何使用捕获变量 ​</strong>​（而非如何声明）。</li>
-</ul>
-<hr />
-<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
-]]></content>
-      <categories>
-        <category>笔记</category>
-      </categories>
-      <tags>
-        <tag>Rust</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>迭代器</title>
     <url>/blog/posts/2cf69f40/</url>
     <content><![CDATA[<p>好的，我们来详细解释一下 Rust 中的 <code>into_iter()</code>, <code>iter()</code>, 和 <code>iter_mut()</code> 这三个方法。它们都是用于从集合（如 <code>Vec</code>, <code>HashMap</code>, <code>String</code>, 数组等）创建迭代器的核心方法，但它们在处理集合 ​<strong>​ 所有权 ​</strong>​ 和 ​<strong>​ 元素访问权限 ​</strong>​ 上有本质区别。</p>
@@ -1068,6 +1131,101 @@
 <li>想 ​<strong>​ 修改元素 ​</strong>​？用 <code>iter_mut()</code>。</li>
 <li>只想 ​<strong>​ 读取元素 ​</strong>​ 且 ​<strong>​ 保留集合 ​</strong>​？用 <code>iter()</code>。</li>
 <li>想 ​<strong>​ 消费集合 ​</strong>​（比如转换元素类型、把集合所有权传给其他函数）？用 <code>into_iter()</code>（或直接在 <code>for</code> 循环里用集合变量）。</li>
+</ul>
+<hr />
+<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
+]]></content>
+      <categories>
+        <category>笔记</category>
+      </categories>
+      <tags>
+        <tag>Rust</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>闭包</title>
+    <url>/blog/posts/f9636392/</url>
+    <content><![CDATA[<p>在 Rust 中，<code>Fn</code>、<code>FnOnce</code> 和 <code>FnMut</code> 是定义闭包行为的三个核心 trait，它们决定了闭包如何捕获环境变量以及如何被调用。以下是清晰的解释和对比：</p>
+<hr />
+<h3 id="1-核心概念"><a class="markdownIt-Anchor" href="#1-核心概念"></a> ​<strong>​1. 核心概念 ​</strong>​</h3>
+<table>
+<thead>
+<tr>
+<th>Trait</th>
+<th>所有权要求</th>
+<th>调用方式</th>
+<th>典型用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>​<strong>​<code>FnOnce</code>​</strong>​</td>
+<td>获取所有权（<code>self</code>）</td>
+<td>只能调用 ​<strong>​ 一次 ​</strong>​</td>
+<td>消耗资源的闭包（如移动所有权）</td>
+</tr>
+<tr>
+<td>​<strong>​<code>FnMut</code>​</strong>​</td>
+<td>可变借用（<code>&amp;mut self</code>）</td>
+<td>可调用 ​<strong>​ 多次 ​</strong>​（可修改状态）</td>
+<td>需要修改捕获变量的闭包</td>
+</tr>
+<tr>
+<td>​<strong>​<code>Fn</code>​</strong>​</td>
+<td>不可变借用（<code>&amp;self</code>）</td>
+<td>可调用 ​<strong>​ 多次 ​</strong>​（不可修改状态）</td>
+<td>只读取捕获变量的闭包</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="2-详细解释"><a class="markdownIt-Anchor" href="#2-详细解释"></a> ​<strong>​2. 详细解释 ​</strong>​</h3>
+<h4 id="1-fnonce"><a class="markdownIt-Anchor" href="#1-fnonce"></a> ​<strong>​(1) <code>FnOnce</code>​</strong>​</h4>
+<ul>
+<li>​<strong>​ 所有权 ​</strong>​：通过值（<code>self</code>）捕获变量，​<strong>​ 消耗 ​</strong>​ 闭包自身。</li>
+<li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 只能调用一次 ​</strong>​（调用后闭包失效）。</li>
+<li>​<strong>​ 使用场景 ​</strong>​：需要转移所有权的操作（如 <code>std::thread::spawn</code>）。</li>
+<li>​<strong>​ 示例 ​</strong>​：</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> <span class="variable">consume</span> = || &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">    std::mem::<span class="title function_ invoke__">drop</span>(s); <span class="comment">// 显式消耗变量</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_ invoke__">consume</span>(); <span class="comment">// 第一次调用（成功）</span></span><br><span class="line"><span class="comment">// consume(); // 错误！闭包已失效</span></span><br></pre></td></tr></table></figure>
+<h4 id="2-fnmut"><a class="markdownIt-Anchor" href="#2-fnmut"></a> ​<strong>​(2) <code>FnMut</code>​</strong>​</h4>
+<ul>
+<li>​<strong>​ 所有权 ​</strong>​：通过可变引用（<code>&amp;mut self</code>）捕获变量，​<strong>​ 可修改 ​</strong>​ 环境。</li>
+<li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 可多次调用 ​</strong>​，每次调用可能改变状态。</li>
+<li>​<strong>​ 使用场景 ​</strong>​：迭代器适配器（如 <code>filter</code>、<code>map</code>）中需要修改状态的闭包。</li>
+<li>​<strong>​ 示例 ​</strong>​：</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">count</span> = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">increment</span> = || &#123;</span><br><span class="line">    count += <span class="number">1</span>; <span class="comment">// 修改捕获的变量</span></span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;Count: &#123;&#125;&quot;</span>, count);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="title function_ invoke__">increment</span>(); <span class="comment">// Count: 1</span></span><br><span class="line"><span class="title function_ invoke__">increment</span>(); <span class="comment">// Count: 2（状态被修改）</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-fn"><a class="markdownIt-Anchor" href="#3-fn"></a> ​<strong>​(3) <code>Fn</code>​</strong>​</h4>
+<ul>
+<li>​<strong>​ 所有权 ​</strong>​：通过不可变引用（<code>&amp;self</code>）捕获变量，​<strong>​ 只读 ​</strong>​ 访问环境。</li>
+<li>​<strong>​ 调用限制 ​</strong>​：​<strong>​ 可多次调用 ​</strong>​，且不改变闭包状态。</li>
+<li>​<strong>​ 使用场景 ​</strong>​：无需修改环境的操作（如事件处理器）。</li>
+<li>​<strong>​ 示例 ​</strong>​：</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"><span class="keyword">let</span> <span class="variable">print</span> = || <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 只读借用</span></span><br><span class="line"><span class="title function_ invoke__">print</span>(); <span class="comment">// &quot;hello&quot;</span></span><br><span class="line"><span class="title function_ invoke__">print</span>(); <span class="comment">// &quot;hello&quot;（状态不变）</span></span><br><span class="line"><span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 外部仍可访问（未移动）</span></span><br></pre></td></tr></table></figure>
+<hr />
+<h3 id="3-继承关系"><a class="markdownIt-Anchor" href="#3-继承关系"></a> ​<strong>​3. 继承关系 ​</strong>​</h3>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">graph LR</span><br><span class="line">  FnOnce --&gt; FnMut</span><br><span class="line">  FnMut --&gt; Fn</span><br></pre></td></tr></table></figure>
+<ul>
+<li>​<strong>​ 规则 ​</strong>​：
+<ul>
+<li>所有闭包都至少实现 <code>FnOnce</code>（因为每个闭包至少会被调用一次）。</li>
+<li>实现 <code>Fn</code> 的闭包自动实现 <code>FnMut</code> 和 <code>FnOnce</code>。</li>
+<li>实现 <code>FnMut</code> 的闭包自动实现 <code>FnOnce</code>。</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="5-实际代码示例"><a class="markdownIt-Anchor" href="#5-实际代码示例"></a> ​<strong>​5. 实际代码示例 ​</strong>​</h3>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 接受 FnOnce 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_once</span>&lt;F: <span class="title function_ invoke__">FnOnce</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 FnMut 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run_mut</span>&lt;F: <span class="title function_ invoke__">FnMut</span>()&gt;(<span class="keyword">mut</span> f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 接受 Fn 的函数</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">run</span>&lt;F: <span class="title function_ invoke__">Fn</span>()&gt;(f: F) &#123;</span><br><span class="line">    <span class="title function_ invoke__">f</span>();</span><br><span class="line">    <span class="title function_ invoke__">f</span>(); <span class="comment">// 可多次调用</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">s</span> = <span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;hello&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnOnce 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_once</span>(|| &#123;</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s); <span class="comment">// 移动所有权</span></span><br><span class="line">        <span class="comment">// drop(s); // 若显式消耗，闭包只能调用一次</span></span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// FnMut 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run_mut</span>(|| &#123;</span><br><span class="line">        <span class="comment">// 无法修改 s（未声明 mut），但可调用多次</span></span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Fn 示例</span></span><br><span class="line">    <span class="title function_ invoke__">run</span>(|| <span class="built_in">println!</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, s)); <span class="comment">// 只读借用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr />
+<h3 id="6-关键总结"><a class="markdownIt-Anchor" href="#6-关键总结"></a> ​<strong>​6. 关键总结 ​</strong>​</h3>
+<ul>
+<li>​<strong>​<code>FnOnce</code>​</strong>​：用于一次性闭包，消耗所有权。</li>
+<li>​<strong>​<code>FnMut</code>​</strong>​：用于需修改状态的闭包，可多次调用。</li>
+<li>​<strong>​<code>Fn</code>​</strong>​：用于只读闭包，可安全多次调用。</li>
+<li>​<strong>​ 编译器自动推断 ​</strong>​：闭包实现哪些 trait 取决于 ​<strong>​ 如何使用捕获变量 ​</strong>​（而非如何声明）。</li>
 </ul>
 <hr />
 <p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>

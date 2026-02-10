@@ -173,7 +173,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/blog/archives/">
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -184,7 +184,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/blog/tags/">
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -206,6 +206,253 @@
     </div>
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://garusuta.github.io/blog/posts/e06d7a63/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Garusuta">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="纸箱">
+      <meta itemprop="description" content="一些日常记录与分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 纸箱">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/blog/posts/e06d7a63/" class="post-title-link" itemprop="url">在Tokio遇到的生命周期问题</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-02-10 13:47:23 / 修改时间：13:55:22" itemprop="dateCreated datePublished" datetime="2026-02-10T13:47:23+08:00">2026-02-10</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> core::time;</span><br><span class="line"><span class="keyword">use</span> sysinfo::&#123;ProcessesToUpdate, System&#125;;</span><br><span class="line"><span class="keyword">use</span> tauri::State;</span><br><span class="line"><span class="keyword">use</span> tokio::time::interval;</span><br><span class="line"><span class="keyword">use</span> tracing::&#123;debug, info, warn&#125;;</span><br><span class="line"><span class="keyword">use</span> crate::state::AppState;</span><br><span class="line">  </span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">struct</span> <span class="title class_">Watcher</span>&lt;<span class="symbol">&#x27;a</span>, T&gt;</span><br><span class="line"><span class="keyword">where</span></span><br><span class="line">    T: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">pub</span> process_name: &amp;<span class="symbol">&#x27;a</span> <span class="type">str</span>,</span><br><span class="line">    <span class="keyword">pub</span> on_start: T,</span><br><span class="line">    <span class="keyword">pub</span> on_stop: T,</span><br><span class="line">    <span class="keyword">pub</span> is_running: <span class="type">bool</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span>&lt;<span class="symbol">&#x27;a</span>, T&gt; Watcher&lt;<span class="symbol">&#x27;a</span>, T&gt;</span><br><span class="line"><span class="keyword">where</span></span><br><span class="line">    T: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">watch_process</span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) &#123;</span><br><span class="line">        info!(<span class="string">&quot;Starting to watch process: &#123;&#125;&quot;</span>, <span class="keyword">self</span>.process_name);</span><br><span class="line">        <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">interval</span> = <span class="title function_ invoke__">interval</span>(time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">2</span>));</span><br><span class="line">        <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">system</span> = System::<span class="title function_ invoke__">new_all</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">loop</span> &#123;</span><br><span class="line">            interval.<span class="title function_ invoke__">tick</span>().<span class="keyword">await</span>;</span><br><span class="line">            system.<span class="title function_ invoke__">refresh_processes</span>(ProcessesToUpdate::All, <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">let</span> <span class="variable">process_is_running</span> = system</span><br><span class="line">                .<span class="title function_ invoke__">processes</span>()</span><br><span class="line">                .<span class="title function_ invoke__">iter</span>()</span><br><span class="line">                .<span class="title function_ invoke__">any</span>(|(_, process)| process.<span class="title function_ invoke__">name</span>().<span class="title function_ invoke__">eq_ignore_ascii_case</span>(<span class="keyword">self</span>.process_name));</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">self</span>.is_running != process_is_running &#123;</span><br><span class="line">                <span class="keyword">self</span>.is_running = process_is_running;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">self</span>.is_running &#123;</span><br><span class="line">                    (<span class="keyword">self</span>.on_start)();</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    (<span class="keyword">self</span>.on_stop)();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">start</span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>, state: State&lt;<span class="symbol">&#x27;_</span>, AppState&gt;) &#123;</span><br><span class="line">        <span class="keyword">let</span> <span class="variable">task_guard</span> = state.watch_task.<span class="title function_ invoke__">lock</span>().<span class="keyword">await</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> task_guard.<span class="title function_ invoke__">is_some</span>() &#123;</span><br><span class="line">            warn!(<span class="string">&quot;&#123;&#125; already in watching, skipping&quot;</span>, <span class="keyword">self</span>.process_name);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">self</span>.<span class="title function_ invoke__">watch_process</span>()); <span class="comment">// 这句出现生命周期问题</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">pub</span> <span class="keyword">fn</span> <span class="title function_">stop</span>() &#123;</span><br><span class="line">		<span class="comment">// TODO</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>报错具体语句</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">self</span>.<span class="title function_ invoke__">watch_process</span>());</span><br><span class="line"><span class="comment">// borrowed data escapes outside of method</span></span><br><span class="line"><span class="comment">// `self` escapes the method body here</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// argument requires that `&#x27;a` must outlive `&#x27;static`</span></span><br></pre></td></tr></table></figure>
+<p><strong>原因分析:</strong></p>
+<ol>
+<li><strong><code>self</code> 的生命周期 (<code>'a</code>) vs. <code>tokio::spawn</code> 的生命周期 (<code>'static</code>)</strong>:
+<ul>
+<li><code>Watcher</code> 结构体定义了一个生命周期参数 <code>'a</code>，并且 <code>process_name</code> 字段的类型是 <code>&amp;'a str</code>。这意味着 <code>process_name</code> 是一个借用的字符串切片，它的生命周期与 <code>Watcher</code> 实例的生命周期 <code>'a</code> 绑定。</li>
+<li><code>tokio::spawn(self.watch_process())</code> 会创建一个新的 Tokio 任务。Tokio 任务通常需要捕获它们所使用的变量，并且这些变量必须具有 <code>'static</code> 生命周期。这是因为 Tokio 任务可以在任何时候被调度，并且它们的生命周期可能比创建它们的函数或方法的生命周期要长。</li>
+<li>当尝试将 <code>self.watch_process()</code>（一个方法，它隐式地借用了 <code>self</code>）传递给 <code>tokio::spawn</code> 时，Rust 编译器会发现 <code>self</code> 的生命周期 <code>'a</code> 可能比 <code>tokio::spawn</code> 所期望的 <code>'static</code> 生命周期要短。如果 <code>'a</code> 短于 <code>'static</code>，那么 <code>self</code>（以及它所引用的 <code>process_name</code>）就可能在任务还在运行时失效，导致悬空指针，这是 Rust 极力避免的。</li>
+</ul>
+</li>
+<li><strong><code>self</code> 逃逸</strong>:
+<ul>
+<li><code>tokio::spawn</code> 期望捕获的数据是 <code>'static</code> 的。当 <code>self.watch_process()</code> 被调用时，它需要访问 <code>self</code>（即 <code>Watcher</code> 实例）。因为 <code>self</code> 拥有一个非 <code>'static</code> 的生命周期 <code>'a</code>，并且 <code>tokio::spawn</code> 需要 <code>'static</code>，所以 <code>self</code> 的借用“逃逸”了 <code>start</code> 方法的局部作用域。</li>
+</ul>
+</li>
+</ol>
+<p><strong>解决方案</strong></p>
+<p><strong>方法一：让 <code>Watcher</code> 结构体本身拥有 <code>'static</code> 生命周期（如果可能）</strong></p>
+<p>如果 <code>Watcher</code> 结构体本身不需要借用任何外部数据（除了 <code>'static</code> 的数据），那么你可以尝试让它拥有 <code>'static</code> 生命周期。然而，由于 <code>process_name: &amp;'a str</code>，这直接阻止了 <code>Watcher</code> 拥有 <code>'static</code> 生命周期。</p>
+<p><strong>方法二：将 <code>Watcher</code> 的所有权移交给任务（更常见）</strong></p>
+<p>最直接的解决方案是让 <code>Watcher</code> 实例的所有权转移到 <code>tokio::spawn</code> 创建的任务中。这意味着 <code>Watcher</code> 实例本身需要被移动到任务中，而不是被借用。</p>
+<p>要做到这一点，你需要：</p>
+<ol>
+<li><strong>移除 <code>Watcher</code> 结构体中的生命周期参数 <code>'a</code>。</strong></li>
+<li><strong>将 <code>process_name</code> 的类型从 <code>&amp;'a str</code> 改为 <code>String</code>。</strong> 这样 <code>process_name</code> 就拥有了 <code>'static</code> 生命周期（或者至少是它自己的所有权，可以被移动）。</li>
+<li><strong>将 <code>watch_process</code> 方法标记为 <code>async</code>，并且让它接收 <code>self</code> 的所有权（<code>self: Watcher&lt;'static, T&gt;</code> 或直接 <code>self</code>）。</strong></li>
+<li><strong>在 <code>start</code> 方法中，将 <code>Watcher</code> 的所有权移动到 <code>tokio::spawn</code>。</strong></li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://garusuta.github.io/blog/posts/3c370dfc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Garusuta">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="纸箱">
+      <meta itemprop="description" content="一些日常记录与分享">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 纸箱">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/blog/posts/3c370dfc/" class="post-title-link" itemprop="url">Tauri 监听器开关按钮后端逻辑</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-02-08 10:56:05" itemprop="dateCreated datePublished" datetime="2026-02-08T10:56:05+08:00">2026-02-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-02-09 23:22:57" itemprop="dateModified" datetime="2026-02-09T23:22:57+08:00">2026-02-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/blog/categories/%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <h1 id="设计思路"><a class="markdownIt-Anchor" href="#设计思路"></a> 设计思路</h1>
+<ul>
+<li><strong>启动任务</strong>: 当用户请求启动任务时，你需要：
+<ol>
+<li>获取 <code>AppState</code> 的锁。</li>
+<li>检查 <code>watch_task</code> 是否已经是 <code>Some</code>。</li>
+<li>如果是 <code>Some</code>，可能需要先取消旧的任务（<code>old_handle.abort()</code>），然后等待它真正停止（<code>old_handle.await</code>，或者在 Tauri 中可能通过其他机制处理）。</li>
+<li>使用 <code>tokio::spawn()</code> 启动新任务，得到一个 <code>JoinHandle</code>。</li>
+<li>将这个 <code>JoinHandle</code> 存入 <code>watch_task</code> 中（<code>Some(new_handle)</code>）。</li>
+<li>释放锁。</li>
+</ol>
+</li>
+<li><strong>停止任务</strong>: 当用户请求停止任务时，你需要：
+<ol>
+<li>获取 <code>AppState</code> 的锁。</li>
+<li>检查 <code>watch_task</code> 是否是 <code>Some</code>。</li>
+<li>如果是 <code>Some</code>，获取 <code>JoinHandle</code>，调用 <code>handle.abort()</code> 来尝试取消它。</li>
+<li>将 <code>watch_task</code> 设置回 <code>None</code>。</li>
+<li>释放锁。</li>
+</ol>
+</li>
+<li><strong>检查任务状态</strong>: 你可能还需要一个命令来检查是否有任务在运行。
+<ol>
+<li>获取 <code>AppState</code> 的锁。</li>
+<li>检查 <code>watch_task</code> 是否是 <code>Some</code>。</li>
+<li>返回 <code>true</code> 或 <code>false</code>。</li>
+<li>释放锁。</li>
+</ol>
+</li>
+</ul>
+<h1 id="代码实现"><a class="markdownIt-Anchor" href="#代码实现"></a> 代码实现</h1>
+<h2 id="appstate结构体"><a class="markdownIt-Anchor" href="#appstate结构体"></a> AppState结构体</h2>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> std::&#123;sync::Arc, thread::JoinHandle&#125;;</span><br><span class="line"><span class="keyword">use</span> tokio::sync::Mutex;</span><br><span class="line"></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">struct</span> <span class="title class_">AppState</span> &#123;</span><br><span class="line">    <span class="keyword">pub</span> watch_task: Arc&lt;Mutex&lt;<span class="type">Option</span>&lt;JoinHandle&lt;()&gt;&gt;&gt;&gt;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">AppState</span> &#123;</span><br><span class="line">    <span class="keyword">pub</span> <span class="keyword">fn</span> <span class="title function_">new</span>() <span class="punctuation">-&gt;</span> <span class="keyword">Self</span> &#123;</span><br><span class="line">        AppState &#123;</span><br><span class="line">            watch_task: Arc::<span class="title function_ invoke__">new</span>(Mutex::<span class="title function_ invoke__">new</span>(<span class="literal">None</span>)),</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">Default</span> <span class="keyword">for</span> <span class="title class_">AppState</span> &#123;</span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">default</span>() <span class="punctuation">-&gt;</span> <span class="keyword">Self</span> &#123;</span><br><span class="line">        <span class="keyword">Self</span>::<span class="title function_ invoke__">new</span>()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="tauri部分"><a class="markdownIt-Anchor" href="#tauri部分"></a> Tauri部分</h2>
+<p>引用AppState</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">    tauri::Builder::<span class="title function_ invoke__">default</span>()</span><br><span class="line">.<span class="title function_ invoke__">manage</span>(AppState::<span class="title function_ invoke__">new</span>())</span><br></pre></td></tr></table></figure>
+<p><strong><code>tauri::Builder::manage()</code> 方法的作用：</strong></p>
+<ul>
+<li><code>manage()</code> 方法是 Tauri 提供的用于<strong>管理应用程序全局状态</strong>的机制。</li>
+<li>当调用 <code>builder.manage(some_value)</code> 时，Tauri 会将 <code>some_value</code> 的一个<strong>克隆（如果 <code>some_value</code> 是 <code>Clone</code> 的）或者一个共享引用（如果 <code>some_value</code> 是 <code>Arc</code> 的）</strong> 存储在应用程序的内部状态管理器中。</li>
+<li>在例子中，<code>AppState::new()</code> 创建了一个 <code>AppState</code> 实例。由于 <code>AppState</code> 内部使用了 <code>Arc</code>，Tauri 实际上会将这个 <code>Arc&lt;Mutex&lt;Option&lt;JoinHandle&lt;()&gt;&gt;&gt;&gt;</code> 的共享引用存储起来。</li>
+</ul>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[tauri::command]</span></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">start_watching</span>(state: State&lt;<span class="symbol">&#x27;_</span>, AppState&gt;) <span class="punctuation">-&gt;</span> <span class="type">Result</span>&lt;(), <span class="type">String</span>&gt; &#123;</span><br><span class="line">    <span class="comment">// 检查是否已经在监听</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">task_guard</span> = state.watch_task.<span class="title function_ invoke__">lock</span>().<span class="keyword">await</span>;</span><br><span class="line">    <span class="keyword">if</span> task_guard.<span class="title function_ invoke__">is_some</span>() &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="title function_ invoke__">Err</span>(<span class="string">&quot;Already watching&quot;</span>.<span class="title function_ invoke__">to_string</span>());</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">let</span> <span class="variable">on_start</span> = <span class="keyword">move</span> || &#123;</span><br><span class="line">		<span class="comment">// 开启时运行的函数</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">let</span> <span class="variable">on_stop</span> = <span class="keyword">move</span> || &#123;</span><br><span class="line">		<span class="comment">// 关闭时运行的函数</span></span><br><span class="line">    &#125;;</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">async</span> <span class="keyword">move</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">watch_task</span>(on_start, on_stop).<span class="keyword">await</span>;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    *task_guard = <span class="title function_ invoke__">Some</span>(task);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;监听已启动&quot;</span>);</span><br><span class="line">    <span class="title function_ invoke__">Ok</span>(())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#[tauri::command]</span></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">stop_watching</span>(state: State&lt;<span class="symbol">&#x27;_</span>, AppState&gt;) <span class="punctuation">-&gt;</span> <span class="type">Result</span>&lt;(), <span class="type">String</span>&gt; &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">task_guard</span> = state.watch_task.<span class="title function_ invoke__">lock</span>().<span class="keyword">await</span>;</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">let</span> <span class="variable">Some</span>(task) = task_guard.<span class="title function_ invoke__">take</span>() &#123;</span><br><span class="line">        task.<span class="title function_ invoke__">abort</span>();</span><br><span class="line">        <span class="built_in">println!</span>(<span class="string">&quot;监听已停止&quot;</span>);</span><br><span class="line">        <span class="title function_ invoke__">Ok</span>(())</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">Err</span>(<span class="string">&quot;Not watching&quot;</span>.<span class="title function_ invoke__">to_string</span>())</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">  </span><br><span class="line"></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">watch_valorant</span>&lt;S, F&gt;(on_start: S, on_stop: F)</span><br><span class="line"><span class="keyword">where</span></span><br><span class="line">    S: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">    F: <span class="title function_ invoke__">Fn</span>() + <span class="built_in">Send</span> + <span class="symbol">&#x27;static</span>,</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">sys</span> = System::<span class="title function_ invoke__">new_all</span>();</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">interval</span> = <span class="title function_ invoke__">interval</span>(time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">3</span>));</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">valorant_running</span> = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">loop</span> &#123;</span><br><span class="line">        interval.<span class="title function_ invoke__">tick</span>().<span class="keyword">await</span>;</span><br><span class="line">        sys.<span class="title function_ invoke__">refresh_all</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> <span class="variable">is_running</span> = <span class="comment">// 具体实现</span></span><br><span class="line">        <span class="keyword">if</span> is_running &#123;</span><br><span class="line">            <span class="title function_ invoke__">on_start</span>();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="title function_ invoke__">on_stop</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>** <code>tauri::State&lt;'_, AppState&gt;</code>：**</p>
+<ul>
+<li><code>tauri::State</code>: 这是 Tauri 提供的一个用于在命令、事件等处理函数中访问已注册状态的类型。</li>
+<li><code>&lt;'_, AppState&gt;</code>: 这是一个生命周期和类型参数。
+<ul>
+<li><code>'_</code>: 表示生命周期是匿名的，Tauri 会自动管理它的生命周期，确保它不会比应用程序本身活得更久。</li>
+<li><code>AppState</code>: 指定了我们要访问的状态类型是 <code>AppState</code>。</li>
+</ul>
+</li>
+<li>当你将 <code>app_state: State&lt;'_, AppState&gt;</code> 作为命令参数时，Tauri 会自动查找通过 <code>builder.manage(AppState::new())</code> 注册的 <code>AppState</code> 实例，并安全地将其传递给你的函数。</li>
+</ul>
+<p>** <code>state.watch_task.lock().await</code>：**</p>
+<ul>
+<li>返回的是一个 <code>tokio::sync::MutexGuard&lt;'_, Option&lt;JoinHandle&lt;()&gt;&gt;&gt;</code>。</li>
+<li><code>MutexGuard</code> 是一个<strong>智能指针</strong>。它实现了 <code>Deref</code> 和 <code>DerefMut</code> trait，允许你像访问 <code>Option&lt;JoinHandle&lt;()&gt;&gt;</code> 本身一样访问它。</li>
+</ul>
+<p><strong><code>interval.tick().await;</code>:</strong></p>
+<ul>
+<li><code>interval.tick()</code>: 这个方法返回一个 <code>Future</code>（一个未来的值）。这个 <code>Future</code> 会在下一次间隔时间到达时完成。</li>
+<li><code>.await</code>: 这是异步 Rust 的核心关键字。当程序执行到 <code>.await</code> 时，如果 <code>Future</code> 还没有准备好（即 3 秒还没到），当前的任务（<code>watch_valorant</code> 函数的执行）就会被暂停，Tokio 运行时会去调度执行其他可以运行的任务。一旦 3 秒到了，<code>interval.tick()</code> 的 <code>Future</code> 就完成了，暂停的任务会被唤醒，继续执行 <code>interval.tick().await;</code> 后面的代码。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -243,9 +490,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2026-02-04 23:03:35 / 修改时间：23:07:30" itemprop="dateCreated datePublished" datetime="2026-02-04T23:03:35+08:00">2026-02-04</time>
+      <time title="创建时间：2026-02-04 23:03:35" itemprop="dateCreated datePublished" datetime="2026-02-04T23:03:35+08:00">2026-02-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-02-06 21:03:48" itemprop="dateModified" datetime="2026-02-06T21:03:48+08:00">2026-02-06</time>
     </span>
 
   
@@ -388,7 +641,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-02-06 21:02:30" itemprop="dateModified" datetime="2026-02-06T21:02:30+08:00">2026-02-06</time>
+      <time title="修改时间：2026-02-06 21:03:48" itemprop="dateModified" datetime="2026-02-06T21:03:48+08:00">2026-02-06</time>
     </span>
 
   
@@ -490,9 +743,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2026-01-31 10:32:09 / 修改时间：12:02:37" itemprop="dateCreated datePublished" datetime="2026-01-31T10:32:09+08:00">2026-01-31</time>
+      <time title="创建时间：2026-01-31 10:32:09" itemprop="dateCreated datePublished" datetime="2026-01-31T10:32:09+08:00">2026-01-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-02-06 21:03:48" itemprop="dateModified" datetime="2026-02-06T21:03:48+08:00">2026-02-06</time>
     </span>
 
   
@@ -1029,9 +1288,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2025-12-14 00:12:59 / 修改时间：21:18:04" itemprop="dateCreated datePublished" datetime="2025-12-14T00:12:59+08:00">2025-12-14</time>
+      <time title="创建时间：2025-12-14 00:12:59" itemprop="dateCreated datePublished" datetime="2025-12-14T00:12:59+08:00">2025-12-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-02-08 10:53:45" itemprop="dateModified" datetime="2026-02-08T10:53:45+08:00">2026-02-08</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1053,7 +1318,30 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="单线程异步"><a class="markdownIt-Anchor" href="#单线程异步"></a> 单线程异步</h1>
+          <h1 id="基础概念"><a class="markdownIt-Anchor" href="#基础概念"></a> 基础概念</h1>
+<h2 id="1-同步-synchronous"><a class="markdownIt-Anchor" href="#1-同步-synchronous"></a> 1. 同步 (Synchronous)</h2>
+<p>任务执行必须按顺序来，一个任务完成后，下一个任务才能开始。就像你去餐厅点餐，必须等上一个菜吃完 / 上完，才能点下一个。</p>
+<h2 id="2-异步-asynchronous"><a class="markdownIt-Anchor" href="#2-异步-asynchronous"></a> 2. 异步 (Asynchronous)</h2>
+<p>任务执行不需要等待上一个任务完成，发起任务后可以去做其他事，等任务完成后会收到 “通知”（回调 / 事件）。就像点餐时先点完所有菜，不用等上一个菜上，后厨同时准备，菜做好了服务员会喊你。</p>
+<h2 id="3-并发-concurrency"><a class="markdownIt-Anchor" href="#3-并发-concurrency"></a> 3. 并发 (Concurrency)</h2>
+<p>多个任务在<strong>同一时间段内</strong>交替执行（看似同时进行），但同一时刻只有一个任务在执行。就像你一边写代码，一边回微信，一边喝水 —— 其实是大脑快速切换，同一时刻只做一件事。</p>
+<p><strong>核心</strong>：任务切换（上下文切换），利用等待时间（比如 IO 等待）处理其他任务。</p>
+<ul>
+<li>异步编程是实现并发的常见方式；</li>
+<li>单核 CPU 只能实现并发，无法实现并行。</li>
+</ul>
+<h2 id="4-并行-parallelism"><a class="markdownIt-Anchor" href="#4-并行-parallelism"></a> 4. 并行 (Parallelism)</h2>
+<p>多个任务在<strong>同一时刻</strong>真正同时执行。就像你和同事一起写代码，你们俩同一时刻都在敲键盘 —— 需要多核 CPU / 多个进程支持。</p>
+<ul>
+<li>概念划分
+<ul>
+<li>并发、并行，是逻辑结构的设计模式。</li>
+<li>同步、异步，是逻辑调用方式。</li>
+<li>并发、并行是异步的 2 种实现方式。</li>
+</ul>
+</li>
+</ul>
+<h1 id="单线程异步"><a class="markdownIt-Anchor" href="#单线程异步"></a> 单线程异步</h1>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#添加完整功能的tokio到项目中</span></span><br><span class="line">cargo add tokio -F full</span><br></pre></td></tr></table></figure>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> tokio::runtime;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">hi</span>() &#123;</span><br><span class="line">	<span class="built_in">println!</span>(<span class="string">&quot;Hello!&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">	<span class="keyword">let</span> <span class="variable">rt</span> = runtime::Builder::<span class="title function_ invoke__">new_current_thread</span>()</span><br><span class="line">		.<span class="title function_ invoke__">enable_all</span>()</span><br><span class="line">		.<span class="title function_ invoke__">build</span>()</span><br><span class="line">		.<span class="title function_ invoke__">unwrap</span>();</span><br><span class="line">	rt.<span class="title function_ invoke__">block_on</span>(<span class="title function_ invoke__">hi</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>等效于</p>
@@ -1064,6 +1352,30 @@
 <li><code>async fn main() {}</code>并非异步函数，通过安装<strong>cargo-expand</strong>可以了解到</li>
 </ol>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#![feature(prelude_import)]</span></span><br><span class="line"><span class="meta">#[macro_use]</span></span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">crate</span> std;</span><br><span class="line"><span class="meta">#[prelude_import]</span></span><br><span class="line"><span class="keyword">use</span> std::prelude::rust_2024::*;</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">fn</span> <span class="title function_">hi</span>() &#123;</span><br><span class="line">    &#123;</span><br><span class="line">        ::std::io::_print(<span class="built_in">format_args!</span>(<span class="string">&quot;Hello!\n&quot;</span>));</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">body</span> = <span class="keyword">async</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">hi</span>().<span class="keyword">await</span>;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="meta">#[allow(</span></span><br><span class="line"><span class="meta">        clippy::expect_used,</span></span><br><span class="line"><span class="meta">        clippy::diverging_sub_expression,</span></span><br><span class="line"><span class="meta">        clippy::needless_return,</span></span><br><span class="line"><span class="meta">        clippy::unwrap_in_result</span></span><br><span class="line"><span class="meta">    )]</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> tokio::runtime::Builder::<span class="title function_ invoke__">new_current_thread</span>()</span><br><span class="line">            .<span class="title function_ invoke__">enable_all</span>()</span><br><span class="line">            .<span class="title function_ invoke__">build</span>()</span><br><span class="line">            .<span class="title function_ invoke__">expect</span>(<span class="string">&quot;Failed building the Runtime&quot;</span>)</span><br><span class="line">            .<span class="title function_ invoke__">block_on</span>(body);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="多线程异步"><a class="markdownIt-Anchor" href="#多线程异步"></a> 多线程异步</h1>
+<h1 id="函数解析"><a class="markdownIt-Anchor" href="#函数解析"></a> 函数解析</h1>
+<h2 id="tokiospawn"><a class="markdownIt-Anchor" href="#tokiospawn"></a> <code>tokio::spawn()</code></h2>
+<p>示例代码</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">task</span> = tokio::<span class="title function_ invoke__">spawn</span>(<span class="keyword">async</span> <span class="keyword">move</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">watch_valorant</span>(on_start, on_stop).<span class="keyword">await</span>;</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure>
+<p><code>tokio::spawn</code> 接受一个<code>Future</code>表达式，会立即返回一个 <code>JoinHandle&lt;T&gt;</code>，其中 <code>T</code> 是异步任务（<code>async move { ... }</code> 块）的返回值类型。</p>
+<ul>
+<li><code>JoinHandle</code> 是一个句柄，你可以用它来：
+<ul>
+<li><strong>等待任务完成</strong>: 使用 <code>task.await</code>。这将返回异步任务的返回值。</li>
+<li><strong>取消任务</strong>: 使用 <code>task.abort()</code>。</li>
+</ul>
+</li>
+</ul>
+<p><strong><code>async move { ... }</code></strong>:<br />
+- 这是一个<strong>异步闭包（async closure）</strong>。<br />
+- <code>async</code>: 关键字表明这是一个异步函数或闭包，它可以在等待 I/O 或其他异步操作时暂停执行，而不会阻塞整个线程。<br />
+- <code>move</code>: 关键字表示这个闭包会<strong>获取</strong>它所捕获的所有变量的所有权。这意味着闭包内部的代码将拥有这些变量，而不是仅仅借用它们。这对于在 <code>tokio::spawn</code> 中启动的任务非常重要，因为任务可能会在函数作用域之外执行，所以它需要拥有它自己的数据副本或所有权。</p>
+<h2 id="mutex"><a class="markdownIt-Anchor" href="#mutex"></a> Mutex</h2>
+<p><code>use tokio::sync::Mutex;</code>:<br />
+- <code>tokio::sync::Mutex</code> 是 Tokio 运行时提供的<strong>异步互斥锁</strong>。<br />
+- 与标准的 <code>std::sync::Mutex</code> 不同，<code>tokio::sync::Mutex</code> 是<strong>异步的</strong>。这意味着当一个任务尝试获取锁但锁已经被另一个任务持有（即发生阻塞）时，它不会阻塞整个线程，而是会让出 CPU 时间，允许其他任务运行，直到锁被释放。这对于在异步环境中（如 Tauri 应用中）管理共享资源非常重要。<br />
+- 这里的 <code>Mutex</code> 用来确保在任何时候，<strong>只有一个任务可以访问和修改 <code>Option&lt;JoinHandle&lt;()&gt;&gt;</code></strong>。这可以防止在启动新任务和取消旧任务时发生数据不一致的问题。</p>
+
       
     </div>
 
@@ -1366,302 +1678,6 @@
 <li>计算端口Uoc的等效电阻Req</li>
 </ol>
 <p>最后将电路变换成，一个电压源Uoc和一个等效电阻的Req的电路（诺顿反之同理）</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://garusuta.github.io/blog/posts/285b0bf6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="Garusuta">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="纸箱">
-      <meta itemprop="description" content="一些日常记录与分享">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 纸箱">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/posts/285b0bf6/" class="post-title-link" itemprop="url">51单片机初入门答疑</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2025-11-23 17:54:13 / 修改时间：18:26:29" itemprop="dateCreated datePublished" datetime="2025-11-23T17:54:13+08:00">2025-11-23</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h1 id="高低电平"><a class="markdownIt-Anchor" href="#高低电平"></a> 高低电平</h1>
-<p><img src="LED%E5%B0%8F%E7%81%AF%E7%94%B5%E8%B7%AF.png" alt="" /></p>
-<p>由于电源从正极到负极有电压差，并且电路是导通的，所以就会有电流通过，LED 小灯因为有了电流通过，所以就会直接发光。我们把右侧的原 GND 处接到单片机 P0.0 引脚上，那么如果我们单片机输出一个低电平，也就是跟 GND 一样的 0V 电压，就可以让 LED 小灯和图 2-4 一样发光了。</p>
-<p>因为我们的单片机是可以编程控制的，我们可以让 P0.0 这个引脚输出一个高电平，就是跟 VCC 一样的 5V 电压，那么这个时候，左侧 VCC 电压和右侧的 P0.0 的电压是一致的，那就没有电压差，没有电压差就不会产生电流，没有电流 LED 小灯就不会亮，也就是会处于熄灭状态。</p>
-<h1 id="特殊功能寄存器和位定义"><a class="markdownIt-Anchor" href="#特殊功能寄存器和位定义"></a> 特殊功能寄存器和位定义</h1>
-<p><strong>第一条语句是：sfr  P0 = 0x80;</strong></p>
-<p>sfr 这个关键字，是 51 单片机特有的，他的作用是定义一个单片机特殊功能寄存器(special function register)。51 单片机内部有很多个小模块，每个模块居住在拥有唯一房间号的房间内，同时每个模块都有 8 个控制开关。P0 就是一个功能模块，就住在了 0x80 这个房间里，我们就是通过设置 P0 内部这个模块的 8 个开关，来让单片机的 P0 这 8 个 IO 口输出高电平或者低电平的。而 51 单片机内部有很多寄存器，如果我们想使用的话必须提前进行 sfr 声明。不过 Keil 软件已经把所有这些声明都预先写好并保存到一个专门的文件中去了，我们要用的话只要文件开头添加一行#include&lt;reg52.h&gt;即可</p>
-<p><strong>第二条语句是：sbit  LED = P0^0;</strong></p>
-<p>这个 sbit，就是对刚才所说的 SFR 里边的 8 个开关其中的一个进行定义。经过上边第二条语句后，以后只要在程序里写 LED，就代表了 P0.0 口（“^”这个符号在数字键 6 上边），注意这个 P 必须大写，也就是说我们给 P0.0 又取了一个更形象的名字叫做 LED。<br />
-![[IO口特殊功能寄存器.png]]t 图中 P0 口所在的地址是 0x80，一共有从 7 到 0 这 8 个 IO 口控制位，后边有个 Reset Value（复位值），这个很重要，是我们看寄存器必看的一个参数，8 个控制位复位值全部都是 1。</p>
-<p>这就是告诉我们，每当单片机上电复位的时候，所有的引脚的值默认是都是 1，即高电平，我们在设计电路的时候也要充分的考虑这个问题。</p>
-<h1 id="c-运算符"><a class="markdownIt-Anchor" href="#c-运算符"></a> C 运算符</h1>
-<h2 id="按位与"><a class="markdownIt-Anchor" href="#按位与"></a> 按位与 – <code>&amp;</code></h2>
-<p><strong>只有当两个对应的二进制位都为 1 时，结果才为 1，否则为 0</strong></p>
-<h2 id="按位或"><a class="markdownIt-Anchor" href="#按位或"></a> 按位或 – <code>|</code></h2>
-<p><strong>只有当两个对应的二进制位其中有一个是 1，结果就是 1，同 0 才为 0</strong></p>
-<h2 id="按位异或"><a class="markdownIt-Anchor" href="#按位异或"></a> 按位异或 – <code>^</code></h2>
-<p><strong>只有当两个对应的二进制位互异，结果就为 1，否则为 0</strong></p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://garusuta.github.io/blog/posts/29df7ba1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/blog/images/avatar.gif">
-      <meta itemprop="name" content="Garusuta">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="纸箱">
-      <meta itemprop="description" content="一些日常记录与分享">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 纸箱">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/blog/posts/29df7ba1/" class="post-title-link" itemprop="url">特征</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2025-11-23 17:52:57 / 修改时间：18:33:52" itemprop="dateCreated datePublished" datetime="2025-11-23T17:52:57+08:00">2025-11-23</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/blog/categories/%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>在 Rust 中，​<strong>​ 特征（Trait）​</strong>​ 就像是类型之间的魔法契约。它定义了一组可以被共享的行为能力 —— 只要某个类型签署（实现）了这个契约，它就获得了使用这些超能力的资格。</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">add</span>&lt;T: std::ops::Add&lt;Output = T&gt;&gt;(a: T, b: T) <span class="punctuation">-&gt;</span> T &#123;</span><br><span class="line">    a + b</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这个简单的例子中，<code>add()</code>函数对参数<code>T</code>的要求是：​<strong>​ 你必须会加法运算 ​</strong>​（实现了<code>std::ops::Add</code>特征）。特征就是这样约束类型的行为边界。</p>
-<h2 id="孤儿规则"><a class="markdownIt-Anchor" href="#孤儿规则"></a> 孤儿规则</h2>
-<p>特征实现有个关键限制：​<strong>​ 你要为类型 A 实现特征 T，那么 A 或 T 至少有一个是在你的代码宇宙（当前作用域）中定义的！​</strong>​</p>
-<p>这个规则被戏称为“孤儿规则”，它像是 Rust 的宇宙法则：</p>
-<ul>
-<li>✅ 可以为你的<code>Dog</code>结构体实现标准库的<code>Display</code>特征（<code>Display</code>来自外部宇宙）</li>
-<li>✅ 可以为标准库的<code>String</code>类型实现你的<code>bark()</code>特征（<code>bark()</code>来自你的宇宙）</li>
-<li>❌ ​<strong>​ 不能 ​</strong>​ 为<code>String</code>实现<code>Display</code>（两者都来自标准库宇宙）</li>
-</ul>
-<p>这条规则保护了代码宇宙的和平：既防止外部代码破坏你的世界，也避免你无意中干扰其他宇宙的运转。</p>
-<h2 id="trait-bound特征约束设置入场门槛"><a class="markdownIt-Anchor" href="#trait-bound特征约束设置入场门槛"></a> Trait Bound（特征约束）：设置入场门槛</h2>
-<p>特征约束是泛型函数的保镖，它确保传入的值具备所需能力：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 方式一：直接在泛型参数中设置约束</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">print_item</span>&lt;T: Display + <span class="built_in">Debug</span>&gt;(item: &amp;T) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, item);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 方式二：语法糖（更简洁，适合单个参数）</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">print_item_sugar</span>(item: &amp;(<span class="keyword">impl</span> <span class="title class_">Display</span> + <span class="built_in">Debug</span>)) &#123;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;&#123;:?&#125;&quot;</span>, item);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>当约束变复杂时，<code>where</code>子句能让代码更清晰：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 老写法：约束混杂在泛型声明中</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">complex_function</span>&lt;T: Display + <span class="built_in">Clone</span>, U: <span class="built_in">Clone</span> + <span class="built_in">Debug</span>&gt;(t: &amp;T, u: &amp;U) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 新写法：where 子句让约束一目了然</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">clean_function</span>&lt;T, U&gt;(t: &amp;T, u: &amp;U) <span class="punctuation">-&gt;</span> <span class="type">i32</span></span><br><span class="line">    <span class="keyword">where</span> T: Display + <span class="built_in">Clone</span>,  <span class="comment">// T 必须会显示和克隆</span></span><br><span class="line">          U: <span class="built_in">Clone</span> + <span class="built_in">Debug</span>     <span class="comment">// U 必须可克隆和调试</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...函数逻辑</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="用特征约束实现条件方法"><a class="markdownIt-Anchor" href="#用特征约束实现条件方法"></a> 用特征约束实现条件方法</h3>
-<p>特征约束可以给泛型结构体添加特定条件下的方法：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Pair</span>&lt;T&gt; &#123;</span><br><span class="line">    x: T,</span><br><span class="line">    y: T,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 所有 Pair 都有的方法</span></span><br><span class="line"><span class="keyword">impl</span>&lt;T&gt; Pair&lt;T&gt; &#123;</span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">new</span>(x: T, y: T) <span class="punctuation">-&gt;</span> <span class="keyword">Self</span> &#123;</span><br><span class="line">        <span class="keyword">Self</span> &#123; x, y &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 只有具备显示和比较能力的 Pair 才有此方法</span></span><br><span class="line"><span class="keyword">impl</span>&lt;T: Display + <span class="built_in">PartialOrd</span>&gt; Pair&lt;T&gt; &#123;</span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">show_winner</span>(&amp;<span class="keyword">self</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">self</span>.x &gt;= <span class="keyword">self</span>.y &#123;</span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">&quot;冠军是 x: &#123;&#125;&quot;</span>, <span class="keyword">self</span>.x);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">&quot;冠军是 y: &#123;&#125;&quot;</span>, <span class="keyword">self</span>.y);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这样写既保持了代码的条理性，又精确控制了方法的可用范围。</p>
-<h2 id="特征对象运行时的多态魔法"><a class="markdownIt-Anchor" href="#特征对象运行时的多态魔法"></a> 特征对象：运行时的多态魔法</h2>
-<p>当需要返回多种类型时，<code>impl Trait</code>的静态方式会失效：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 编译错误：if 和 else 分支返回了不同类</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">select_pet</span>(is_dog: <span class="type">bool</span>) <span class="punctuation">-&gt;</span> <span class="keyword">impl</span> <span class="title class_">Animal</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> is_dog &#123;</span><br><span class="line">        Dog::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Buddy&quot;</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        Cat::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Whiskers&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这时需要 ​<strong>​ 特征对象 ​</strong>​ —— 一种运行时多态机制。它通过动态分发，让一个指针能代表多种具体类型：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用 Box 在堆上分配</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">select_pet</span>(is_dog: <span class="type">bool</span>) <span class="punctuation">-&gt;</span> <span class="type">Box</span>&lt;<span class="keyword">dyn</span> Animal&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> is_dog &#123;</span><br><span class="line">        <span class="type">Box</span>::<span class="title function_ invoke__">new</span>(Dog::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Buddy&quot;</span>))</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">Box</span>::<span class="title function_ invoke__">new</span>(Cat::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Whiskers&quot;</span>))</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用引用（需注意生命周期）</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">borrow_pet</span>&lt;<span class="symbol">&#x27;a</span>&gt;(is_dog: <span class="type">bool</span>) <span class="punctuation">-&gt;</span> &amp;<span class="symbol">&#x27;a</span> <span class="keyword">dyn</span> Animal &#123;</span><br><span class="line">    <span class="keyword">if</span> is_dog &#123;</span><br><span class="line">        &amp;Dog::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Buddy&quot;</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        &amp;Cat::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Whiskers&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="特征对象的注意事项"><a class="markdownIt-Anchor" href="#特征对象的注意事项"></a> 特征对象的注意事项</h3>
-<ol>
-<li>​<strong>​ 大小很重要：​</strong>​<br />
-特征对象大小在编译期不确定，必须通过指针使用：</li>
-</ol>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 错误：dyn Animal 大小未知</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">receive_animal</span>(animal: <span class="keyword">dyn</span> Animal) &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 正确：通过指针传递</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">receive_animal_smart</span>(animal: &amp;<span class="keyword">dyn</span> Animal) &#123;&#125;</span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li>​<strong>​ 能力限制：​</strong>​<br />
-特征对象只能调用特征中定义的方法：</li>
-</ol>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">dog</span>: <span class="type">Box</span>&lt;<span class="keyword">dyn</span> Animal&gt; = <span class="type">Box</span>::<span class="title function_ invoke__">new</span>(Dog::<span class="title function_ invoke__">new</span>(<span class="string">&quot;Buddy&quot;</span>));</span><br><span class="line">dog.<span class="title function_ invoke__">walk</span>(); <span class="comment">// ✅ 可以调用</span></span><br><span class="line">dog.<span class="title function_ invoke__">bark</span>(); <span class="comment">// ❌ 错误：Animal 特征没有 bark 方法</span></span><br></pre></td></tr></table></figure>
-<h2 id="标记特征类型的能力徽章"><a class="markdownIt-Anchor" href="#标记特征类型的能力徽章"></a> 标记特征：类型的能力徽章</h2>
-<p>标记特征是给类型颁发的特殊能力徽章，通常不包含具体行为，只声明某种能力：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义高级特征，要求类型具备调试、相等和默认能力</span></span><br><span class="line"><span class="keyword">trait</span> <span class="title class_">Premium</span>: <span class="built_in">Debug</span> + <span class="built_in">PartialEq</span> + <span class="built_in">Default</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 为自定义类型颁发Premium徽章</span></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">Premium</span> <span class="keyword">for</span> <span class="title class_">MyStruct</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
-<p>在函数约束中使用：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">premium_function</span>&lt;T: Premium&gt;(item: T) &#123;</span><br><span class="line">    <span class="comment">// 这里可以安全使用Debug、PartialEq和Default方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这样避免了重复书写多个特征约束，让代码更简洁。</p>
-<h2 id="关联类型特征中的类型占位符"><a class="markdownIt-Anchor" href="#关联类型特征中的类型占位符"></a> 关联类型：特征中的类型占位符</h2>
-<p>当特征需要返回不同类型时，关联类型提供了优雅的解决方案：</p>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">trait</span> <span class="title class_">TravelTime</span> &#123;</span><br><span class="line">    <span class="keyword">type</span> <span class="title class_">Destination</span>;  <span class="comment">// 占位符类型</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">travel</span>(&amp;<span class="keyword">self</span>) <span class="punctuation">-&gt;</span> <span class="keyword">Self</span>::Destination; <span class="comment">// 返回占位符类型</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">TravelTime</span> <span class="keyword">for</span> <span class="title class_">Car</span> &#123;</span><br><span class="line">    <span class="keyword">type</span> <span class="title class_">Destination</span> = City; <span class="comment">// 实际指定为City</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">travel</span>(&amp;<span class="keyword">self</span>) <span class="punctuation">-&gt;</span> City &#123;</span><br><span class="line">        City::<span class="title function_ invoke__">new</span>(<span class="string">&quot;北京&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">impl</span> <span class="title class_">TravelTime</span> <span class="keyword">for</span> <span class="title class_">Spaceship</span> &#123;</span><br><span class="line">    <span class="keyword">type</span> <span class="title class_">Destination</span> = Planet; <span class="comment">// 实际指定为Planet</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">fn</span> <span class="title function_">travel</span>(&amp;<span class="keyword">self</span>) <span class="punctuation">-&gt;</span> Planet &#123;</span><br><span class="line">        Planet::<span class="title function_ invoke__">new</span>(<span class="string">&quot;火星&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="关联类型-vs-泛型参数"><a class="markdownIt-Anchor" href="#关联类型-vs-泛型参数"></a> 关联类型 vs 泛型参数</h3>
-<table>
-<thead>
-<tr>
-<th>场景</th>
-<th>解决方案</th>
-<th>代码示例</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>单一类型映射</td>
-<td>关联类型</td>
-<td><code>type Output;</code></td>
-</tr>
-<tr>
-<td>需要多种类型组合</td>
-<td>泛型参数</td>
-<td><code>trait Add&lt;Rhs&gt;</code></td>
-</tr>
-<tr>
-<td>需要多个实现</td>
-<td>泛型参数</td>
-<td><code>impl Add&lt;i32&gt;</code> 和 <code>impl Add&lt;Point&gt;</code></td>
-</tr>
-<tr>
-<td>保持实现简洁</td>
-<td>关联类型</td>
-<td>避免<code>impl Add&lt;Point, Point&gt;</code>的复杂性</td>
-</tr>
-</tbody>
-</table>
-<h2 id="特征-vs-泛型静态与动态的舞蹈"><a class="markdownIt-Anchor" href="#特征-vs-泛型静态与动态的舞蹈"></a> 特征 vs 泛型：静态与动态的舞蹈</h2>
-<table>
-<thead>
-<tr>
-<th>特性</th>
-<th>泛型</th>
-<th>特征对象</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>分发方式</td>
-<td>静态分发（编译期）</td>
-<td>动态分发（运行时）</td>
-</tr>
-<tr>
-<td>性能</td>
-<td>零开销，直接调用具体方法</td>
-<td>有运行时查找的小开销</td>
-</tr>
-<tr>
-<td>二进制大小</td>
-<td>可能较大（为每个类型生成副本）</td>
-<td>较小</td>
-</tr>
-<tr>
-<td>灵活性</td>
-<td>只能返回一种具体类型</td>
-<td>可返回多种类型</td>
-</tr>
-<tr>
-<td>适用场景</td>
-<td>性能敏感代码，单一类型处理</td>
-<td>需要运行时多态的复杂场景</td>
-</tr>
-</tbody>
-</table>
-<p>​<strong>​ 简单来说：​</strong>​</p>
-<ul>
-<li>泛型像是编译器帮你定制专用工具，高效但缺乏灵活性</li>
-<li>特征对象像是万能工具箱，灵活但需要额外操作成本</li>
-</ul>
-<hr />
-<p>注意：该文章由 <strong>DeepSeek R1</strong> 结合课程笔记优化生成，并由 <strong>Garusuta</strong> 修改发布</p>
 
       
     </div>
